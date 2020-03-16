@@ -1,0 +1,85 @@
+.btn-primary {
+    background-color: #718096 !important;
+    border-color: #7c899b !important;
+}
+
+.btn-primary:not(:disabled):not(.disabled).active:focus, .btn-primary:not(:disabled):not(.disabled):active:focus, .show > .btn-primary.dropdown-toggle:focus {
+	box-shadow: 0 0 0 .2rem rgba(175, 189, 204, 0.5);
+}
+
+.btn-primary.focus, .btn-primary:focus {
+    color: #fff;
+    background-color: #7c899b;
+    border-color: #7c899b;
+    box-shadow: 0 0 0 .2rem rgba(175, 189, 204, 0.5);
+}
+
+canvas{
+    -moz-user-select: none;
+    -webkit-user-select: none;
+    -ms-user-select: none;
+}
+
+#chartjs-tooltip {
+    opacity: 1;
+    position: absolute;
+    background: rgba(0, 0, 0, .7);
+    color: white;
+    border-radius: 3px;
+    -webkit-transition: all .1s ease;
+    transition: all .1s ease;
+    pointer-events: none;
+    -webkit-transform: translate(-50%, 0);
+    transform: translate(-50%, 0);
+}
+
+.chartjs-tooltip-key {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    margin-right: 10px;
+}
+
+.chart {
+    margin: 2rem auto;
+    padding: 0 40px 40px 40px;
+    background-color: #401a9a;
+}
+
+.dropdown {
+    margin-bottom: 1rem;
+}
+
+.chart-container {
+    position: relative;
+    width: 100%;
+}
+
+#yDropdownContainer {
+    position: absolute;
+    left: -85px;
+    top: 50%;
+    rotate: 270deg;
+}
+
+#xDropdownContainer {
+    position: absolute;
+    left: 41%;
+    bottom: 2rem;
+}
+
+#yDropdown {
+    rotate: 90deg;
+    transform: none !important;
+}
+
+.chart-container .btn {
+    display:inline-block;
+    color: #fff;
+    padding-bottom: 5px;
+    background-color: #401a9a;
+}
+
+.chart-container .btn:hover span {
+    border-bottom: 1px solid #fff;
+}
