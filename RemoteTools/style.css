@@ -359,7 +359,8 @@ pre code {
 
 .chart-container {
   margin-top: 3rem;
-  border: 1px solid #fdfdfd2e;
+  border: 1px solid #dbdbdb1c;
+  box-shadow: 0 0 2px #654ba2;
   position: relative;
   width: 100%; }
   .chart-container .btn {
@@ -411,7 +412,7 @@ pre code {
 
 #xDropdownContainer {
   position: absolute;
-  bottom: 10px;
+  bottom: 20px;
   width: 100%; }
   #xDropdownContainer .btn:hover span {
     border-bottom: 1px solid #fff; }
