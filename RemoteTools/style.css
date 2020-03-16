@@ -1,9 +1,9 @@
+@charset "UTF-8";
 /*!
 Author:       Ignacio Guzmán
 Version:      1.0.0
 Description:  Remote Tools
 */
-
 \:root {
   font-size: 10px; }
 
@@ -32,9 +32,9 @@ body {
   font-size: 1rem;
   font-weight: 400;
   line-height: 1.5;
-  color: #777777;
+  color: #ffffff;
   text-align: left;
-  background-color: #FFFFFF; }
+  background-color: #401a9a; }
 
 img {
   max-width: 100%;
@@ -56,7 +56,7 @@ hr {
 h1, h2, h3, h4, h5, h6 {
   margin-top: 0;
   margin-bottom: 0.5rem;
-  color: #212529; }
+  color: #ffffff; }
 
 p {
   margin-top: 0;
@@ -282,7 +282,7 @@ template {
 
 h1, h2, h3, h4, h5, h6,
 .h1, .h2, .h3, .h4, .h5, .h6 {
-  color: #212529;
+  color: #ffffff;
   margin-bottom: 0.5rem;
   font-family: "Montserrat", sans-serif;
   font-weight: 500;
@@ -334,7 +334,7 @@ a > code {
 pre {
   display: block;
   font-size: 87.5%;
-  color: #212529; }
+  color: #ffffff; }
 
 pre code {
   font-size: inherit;
@@ -354,11 +354,12 @@ pre code {
   box-shadow: none !important; }
 
 .chart {
-  margin: 2rem auto;
   padding: 0 40px 40px 40px;
   background-color: #401a9a; }
 
 .chart-container {
+  margin-top: 3rem;
+  border: 1px solid #fdfdfd2e;
   position: relative;
   width: 100%; }
   .chart-container .btn {
@@ -368,6 +369,8 @@ pre code {
     background-color: #401a9a; }
 
 #chartjs-tooltip {
+  font-size: .8rem !important;
+  padding: 10px !important;
   opacity: 1;
   position: absolute;
   background: rgba(0, 0, 0, 0.7);
@@ -378,6 +381,8 @@ pre code {
   pointer-events: none;
   -webkit-transform: translate(-50%, 0);
   transform: translate(-50%, 0); }
+  #chartjs-tooltip table tbody td {
+    padding: 0 10px; }
 
 .chartjs-tooltip-key {
   display: inline-block;
@@ -418,11 +423,14 @@ pre code {
 section {
   padding: 3rem 0; }
 
+.chart-section .title * {
+  color: #ffffff; }
+
 section .title {
   text-align: center; }
   section .title h2 {
-    text-transform: uppercase;
-    font-size: 1.5rem; }
+    font-weight: 600;
+    font-size: 1.5rem;
+    margin-bottom: 1.5rem; }
   section .title h3 {
-    font-size: 1rem;
-    color: #777777; }
+    font-size: 1rem; }
