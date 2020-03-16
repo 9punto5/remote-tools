@@ -411,7 +411,7 @@ pre code {
 
 #xDropdownContainer {
   position: absolute;
-  bottom: 20px;
+  bottom: 10px;
   width: 100%; }
   #xDropdownContainer .btn:hover span {
     border-bottom: 1px solid #fff; }
