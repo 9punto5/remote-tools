@@ -348,8 +348,8 @@ $(document).ready(function(){
 
             // Add the tool names as items in the axis dropdowns
             for (let i = 1; i < qualificationParameters.length; i++) {
-                chartXCriteriaDropdown.append( '<a class="dropdown-item" href="#">' + qualificationParameters[i] + '</a>' );
-                chartYCriteriaDropdown.append( '<a class="dropdown-item" href="#">' + qualificationParameters[i] + '</a>' );
+                chartXCriteriaDropdown.append( '<a class="dropdown-item" role="button" tabindex="0">' + qualificationParameters[i] + '</a>' );
+                chartYCriteriaDropdown.append( '<a class="dropdown-item" role="button" tabindex="0">' + qualificationParameters[i] + '</a>' );
             }
 
             // Set click listeners to the tool names (dropdowns items in the axis dropdowns)
@@ -456,7 +456,7 @@ $(document).ready(function(){
         } else {
             chart.options.showAllTooltips = true;
         }
-        
+
         chart.update();
     }
 });
