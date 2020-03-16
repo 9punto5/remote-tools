@@ -6,6 +6,8 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.6.0/Chart.min.js"></script>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+    
+    <link href="https://fonts.googleapis.com/css?family=Montserrat&display=swap" rel="stylesheet"> 
     <link rel="stylesheet" href="style.css">
     <title>Remote Tools</title>
 </head>
@@ -13,40 +15,40 @@
     <div id="content" class="site-content" tabindex="-1" >
         <div id="primary" class="content-area">
             <main id="main" class="site-main" role="main">
-                <div class="container">
-                    <div class="row">
-                        <section class="chart-section">
-                            <div class="title">
-                                <h2>Herramientas de comunicación, colaboración y management</h2>
-                                <h3>Existen distintas dimensiones para evaluar la herramienta que mejor puede funcionar para ti o para tu organización, acá una ayuda para evaluar y elegir</h3>
-                            </div>
-                            
-                            <div class="chart-container">
-                                <canvas class="chart" id="chart"></canvas>
-                
-                                <div id="xDropdownContainer">
-                                    <div class="dropdown">
-                                        <button class="btn dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                            <span id="criteriaX"></span>
-                                        </button>
-                                        <div id="xDropdownMenu" class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                <section class="chart-section">
+                    <div class="container">
+                        <div class="row">
+                                <div class="title">
+                                    <h2>Herramientas de comunicación, colaboración y management</h2>
+                                    <h3>Existen distintas dimensiones para evaluar la herramienta que mejor puede funcionar para ti o para tu organización, acá una ayuda para evaluar y elegir</h3>
+                                </div>
+                                
+                                <div class="chart-container">
+                                    <canvas class="chart" id="chart"></canvas>
+                    
+                                    <div id="xDropdownContainer">
+                                        <div class="dropdown">
+                                            <button class="btn dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                                <span id="criteriaX"></span>
+                                            </button>
+                                            <div id="xDropdownMenu" class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                                            </div>
+                                        </div>
+                                    </div>
+                    
+                                    <div id="yDropdownContainer">
+                                        <div class="dropdown">
+                                            <button class="btn dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                                <span id="criteriaY"></span>
+                                            </button>
+                                            <div id="yDropdownMenu" class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                
-                                <div id="yDropdownContainer">
-                                    <div class="dropdown">
-                                        <button class="btn dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                            <span id="criteriaY"></span>
-                                        </button>
-                                        <div id="yDropdownMenu" class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </section>
-                    </div><!-- #row -->
-                </div><!-- #container -->
+                        </div><!-- #row -->
+                    </div><!-- #container -->
+                </section>
             </main><!-- #main -->
         </div><!-- #primary -->
     </div><!-- #content -->
