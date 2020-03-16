@@ -453,10 +453,10 @@ $(document).ready(function(){
     function checkIfShowAllTooltips() {
         if ($(window).width() < 990) {
             chart.options.showAllTooltips = false;
-            chart.update();
         } else {
             chart.options.showAllTooltips = true;
-            chart.update();
         }
+        
+        chart.update();
     }
 });
