@@ -3,7 +3,57 @@ const $ = jQuery.noConflict();
 $(document).ready(function(){
     ChartFunctions = {
         initChart: function() {
+            Chart.plugins.register({
+                beforeRender: function(chart) {
+                    if (chart.config.options.showAllTooltips) {
+                        // create an array of tooltips
+                        // we can't use the chart tooltip because there is only one tooltip per chart
+                        chart.pluginTooltips = [];
+                        chart.config.data.datasets.forEach(function(dataset, i) {
+                            chart.getDatasetMeta(i).data.forEach(function(sector, j) {
+                                chart.pluginTooltips.push(new Chart.Tooltip({
+                                        _chart: chart.chart,
+                                        _chartInstance: chart,
+                                        _data: chart.data,
+                                        _options: chart.options.tooltips,
+                                        _active: [sector]
+                                    },
+                                    chart
+                                ));
+                            });
+                        });
+                    // turn off normal tooltips
+                    chart.options.tooltips.enabled = false;
+		        }},
+                afterDraw: function(chart, easing) {
+                    if (chart.config.options.showAllTooltips) {
+                        // we don't want the permanent tooltips to animate, so don't do anything till the animation runs atleast once
+                        if (!chart.allTooltipsOnce) {
+                            if (easing !== 1) return;
+                            chart.allTooltipsOnce = true;
+                        }
+
+                        // turn on tooltips
+                        chart.options.tooltips.enabled = true;
+                        Chart.helpers.each(chart.pluginTooltips, function(tooltip) {
+                            tooltip.initialize();
+                            tooltip._options.bodyFontFamily = "'Montserrat', sans-serif"
+                            tooltip._options.displayColors = false;
+                            tooltip._options.bodyFontSize = 14;
+                            tooltip._options.yPadding = 0;
+                            tooltip._options.xPadding = 0;
+                            tooltip.update();
+                            // we don't actually need this since we are not animating tooltips
+                            tooltip.pivot();
+                            tooltip.transition(easing).draw();
+                        });
+                        chart.options.tooltips.enabled = false;
+                    }
+                }
+            });
+
             Chart.defaults.global.defaultFontColor='white';
+
             chart = new Chart(chartCtx, {
                 type: 'bubble',
                 labels: [1,2,3,4,5,6,7,8,9,10],
@@ -20,7 +70,7 @@ $(document).ready(function(){
                     },
                     title: {
                         display: true,
-                        fontSize: 16,
+                        fontSize: 20,
                         padding: 40
                     },
                     scales: {
@@ -53,6 +103,15 @@ $(document).ready(function(){
                     },
                     tooltips: {
                         enabled: false,
+                        backgroundColor:"rgba(0,0,0,0)",
+                        callbacks: {
+                            title: function(tooltipItems, data) {
+                              return data.datasets[tooltipItems[0].datasetIndex].label;
+                            },
+                            label: function(tooltipItem, data) {
+                                return "";
+                            }
+                        },
                         custom: function(tooltip) {
                             let tooltipEl = document.getElementById('chartjs-tooltip');
                     
@@ -385,4 +444,19 @@ $(document).ready(function(){
 
     ChartFunctions.initChart();
     ChartFunctions.loadDemoData();
+    checkIfShowAllTooltips();
+
+    $(window).resize(function() {
+        checkIfShowAllTooltips();
+    });
+
+    function checkIfShowAllTooltips() {
+        if ($(window).width() < 990) {
+            chart.options.showAllTooltips = false;
+            chart.update();
+        } else {
+            chart.options.showAllTooltips = true;
+            chart.update();
+        }
+    }
 });
