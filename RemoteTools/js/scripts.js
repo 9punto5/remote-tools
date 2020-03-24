@@ -1,6 +1,6 @@
 jQuery( function() {
     /** 
-     * Chart Section
+     * Chart Functions
      * 
     */
     const chartFunctions = (function() {
@@ -9,10 +9,12 @@ jQuery( function() {
         myCurrentXCriteria,
         myCurrentYCriteria,
         myXCriteriaSpan,
-        myYCriteriaSpan;
+        myYCriteriaSpan,
+        lastestWindowWidth,
+        lastestWindowHeight;
         const myBorderColor = "#00e5c8",
         myBackgroundColor = "#00e5c8",
-        myPointRadius = 5;
+        myPointRadius = 7;
 
         customizeStyling = function() {
             Chart.defaults.global.defaultFontColor='white';
@@ -68,12 +70,12 @@ jQuery( function() {
 
         loadDataInChart = function() {
             const chartDatasets = [];
-            for (let i = 1; i < myData.length; i++) {
-                const xCriteriaScore = parseFloat(myData[i][myCurrentXCriteria].replace(',','.').replace(' ',''))
-                const yCriteriaScore = parseFloat(myData[i][myCurrentYCriteria].replace(',','.').replace(' ',''))
+            for (let i = 0; i < myData[3].data.length; i++) {
+                const xCriteriaScore = myData[2].data[myCurrentXCriteria][(i + 1) + "_average"]
+                const yCriteriaScore = myData[2].data[myCurrentYCriteria][(i + 1) + "_average"]
 
                 chartDatasets.push({
-                    label: myData[i][0],
+                    label: myData[3].data[i].name,
                     borderColor: myBorderColor,
                     backgroundColor: myBackgroundColor,
                     data: [{x: xCriteriaScore, y: yCriteriaScore, r: myPointRadius}]
@@ -86,18 +88,17 @@ jQuery( function() {
         setUpAxisDropdowns = function() {
             const chartXCriteriaDropdown = $('#xDropdownMenu');
             const chartYCriteriaDropdown = $('#yDropdownMenu');
-            const ratingParameters = Object.values(myData[0]);
+            const ratingParameters = Object.values(myData[2].data);
 
             // Add the tool names as items in the axis dropdowns
-            for (let i = 1; i < ratingParameters.length; i++) {
-                chartXCriteriaDropdown.append( '<a class="dropdown-item" role="button" tabindex="0">' + ratingParameters[i] + '</a>' );
-                chartYCriteriaDropdown.append( '<a class="dropdown-item" role="button" tabindex="0">' + ratingParameters[i] + '</a>' );
+            for (let i = 0; i < ratingParameters.length; i++) {
+                chartXCriteriaDropdown.append( '<a class="dropdown-item parameter" role="button" tabindex="0">' + ratingParameters[i].name + '</a>' );
+                chartYCriteriaDropdown.append( '<a class="dropdown-item parameter" role="button" tabindex="0">' + ratingParameters[i].name + '</a>' );
             }
 
             // Set click listeners to the tool names (dropdowns items in the axis dropdowns)
-            $('.dropdown-item').click(function(){
-                // +1 to match json data index
-                const selectedCriteriaIndex =  $(this).index() + 1;
+            $('.dropdown-item.parameter').click(function(){
+                const selectedCriteriaIndex =  $(this).index() ;
                 const isDropdownFromXAxis = $(this).parent()[0] == chartXCriteriaDropdown[0];
         
                 if (isDropdownFromXAxis) {
@@ -136,12 +137,44 @@ jQuery( function() {
 
             // Update myChart
             myChart.data.datasets = datasets;
-            myChart.options.title.text = myData[0][myCurrentXCriteria] + " y " + myData[0][myCurrentYCriteria];
+            myChart.options.title.text = myData[2].data[myCurrentXCriteria].name + " y " + myData[2].data[myCurrentYCriteria].name;
             myChart.update();
 
             // Update Dropdown Text
-            myXCriteriaSpan.textContent = myData[0][myCurrentXCriteria];
-            myYCriteriaSpan.textContent = myData[0][myCurrentYCriteria];
+            myXCriteriaSpan.textContent = myData[2].data[myCurrentXCriteria].name;
+            myYCriteriaSpan.textContent = myData[2].data[myCurrentYCriteria].name;
+
+            $('#xAxisInfoTitle')[0].textContent = myData[2].data[myCurrentXCriteria].name;
+            $('#yAxisInfoTitle')[0].textContent = myData[2].data[myCurrentYCriteria].name;
+
+            $('#xAxisInfoDescription')[0].textContent = myData[2].data[myCurrentXCriteria].description;
+            $('#yAxisInfoDescription')[0].textContent = myData[2].data[myCurrentYCriteria].description;
+        }
+
+        updateChartOptions = function(windowWidth, windowHeight) {
+            // We don't wanna do nothing when the user scrolls down and the navigator bar hides
+            if (windowWidth == lastestWindowWidth && windowHeight != lastestWindowHeight) {
+                return;
+            }
+
+            lastestWindowWidth = windowWidth;
+            lastestWindowHeight = windowHeight;
+
+            if (windowWidth < 576) {
+                myChart.options.maintainAspectRatio = false;
+
+                if (windowHeight < 420) {
+                    myChart.canvas.parentNode.style.height = windowHeight + 'px';
+                } else if (windowHeight < 550) {
+                    myChart.canvas.parentNode.style.height = (windowHeight / 1.5) + 'px';
+                }
+            } else {
+                myChart.canvas.parentNode.style.height = 'auto';
+                myChart.options.maintainAspectRatio = true;
+            }
+
+            myChart.options.showAllTooltips = !(windowWidth < 960);
+            myChart.update();
         }
 
         return {
@@ -149,14 +182,15 @@ jQuery( function() {
                 const chartCtx = $('#chart')[0].getContext('2d');
                 myXCriteriaSpan = $('#criteriaX')[0];
                 myYCriteriaSpan = $('#criteriaY')[0];
-                myCurrentXCriteria = 1;
-                myCurrentYCriteria = 2;
+                myCurrentXCriteria = 0;
+                myCurrentYCriteria = 1;
                 customizeStyling();
                 
                 myChart = new Chart(chartCtx, {
                     type: 'bubble',
                     labels: [1,2,3,4,5,6,7,8,9,10],
                     options: {
+                        responsive: true,
                         responsiveAnimationDuration: 0,
                         animation: {
                             duration: 0
@@ -238,9 +272,9 @@ jQuery( function() {
                                 // Set Text
                                 if (tooltip.body) {
                                     let tableRoot = tooltipEl.querySelector('table');
-                                    const toolName = myData[tooltip.dataPoints[0]["datasetIndex"] + 1][0];
-                                    const xCriteriaScore = myData[0][myCurrentXCriteria] + ": " + tooltip.dataPoints[0].xLabel;
-                                    const yCriteriaScore = myData[0][myCurrentYCriteria] + ": " + tooltip.dataPoints[0].yLabel;
+                                    const toolName = myData[3].data[tooltip.dataPoints[0]["datasetIndex"]].name;
+                                    const xCriteriaScore = myData[2].data[myCurrentXCriteria].name + ": " + tooltip.dataPoints[0].xLabel;
+                                    const yCriteriaScore = myData[2].data[myCurrentYCriteria].name + ": " + tooltip.dataPoints[0].yLabel;
                         
                                     let innerHtml = '<thead></thead>';
                                     innerHtml += '<tr><td><strong>' + toolName + '</strong></td></tr>';
@@ -267,178 +301,51 @@ jQuery( function() {
                 });
 
                 registerPlugins();
+                updateChartOptions($(window).width(), $(window).height());
+                $(window).resize(function() {
+                    updateChartOptions($(window).width(), $(window).height())
+                });
             },
             loadDemoData: function() {
                 myData = [
-                    {
-                       "0":"Herramienta",
-                       "1":"Conversación de calidad",
-                       "2":"Management",
-                       "3":"Calma/Foco",
-                       "4":"Documentación",
-                       "5":"Versatilidad",
-                       "6":"Colaboración",
-                       "7":"Simple",
-                       "8":"Accesibilidad"
-                    },
-                    {
-                       "0":"Airtable",
-                       "1":"3,33",
-                       "2":"6,33",
-                       "3":"6,00",
-                       "4":"5,00",
-                       "5":"8,00",
-                       "6":"8,00",
-                       "7":"4,67",
-                       "8":"7,00"
-                    },
-                    {
-                       "0":"Asana",
-                       "1":"4,50",
-                       "2":"7,00",
-                       "3":"6,00",
-                       "4":"5,50",
-                       "5":"5,50",
-                       "6":"6,50",
-                       "7":"6,50",
-                       "8":"7,25"
-                    },
-                    {
-                       "0":"Basecamp",
-                       "1":"6,25",
-                       "2":"8,25",
-                       "3":"8,50",
-                       "4":"7,50",
-                       "5":"5,00",
-                       "6":"8,00",
-                       "7":"8,00",
-                       "8":"8,25"
-                    },
-                    {
-                       "0":"Correo electrónico",
-                       "1":"3,67",
-                       "2":"3,33",
-                       "3":"4,00",
-                       "4":"4,33",
-                       "5":"5,00",
-                       "6":"4,20",
-                       "7":"8,60",
-                       "8":"9,00"
-                    },
-                    {
-                       "0":"Dropbox Paper",
-                       "1":"4,00",
-                       "2":"5,00",
-                       "3":"6,00",
-                       "4":"7,00",
-                       "5":"6,50",
-                       "6":"7,00",
-                       "7":"7,50",
-                       "8":"8,00"
-                    },
-                    {
-                       "0":"Google D",
-                       "1":"2,00",
-                       "2":"3,80",
-                       "3":"6,40",
-                       "4":"8,00",
-                       "5":"7,50",
-                       "6":"7,80",
-                       "7":"8,20",
-                       "8":"8,60"
-                    },
-                    {
-                       "0":"Notion",
-                       "1":"5,50",
-                       "2":"6,20",
-                       "3":"6,80",
-                       "4":"8,80",
-                       "5":"7,00",
-                       "6":"8,00",
-                       "7":"7,25",
-                       "8":"7,75"
-                    },
-                    {
-                       "0":"Jira",
-                       "1":"4,75",
-                       "2":"8,00",
-                       "3":"6,25",
-                       "4":"6,25",
-                       "5":"6,75",
-                       "6":"6,75",
-                       "7":"4,75",
-                       "8":"4,00"
-                    },
-                    {
-                       "0":"Slack",
-                       "1":"7,33",
-                       "2":"3,50",
-                       "3":"3,33",
-                       "4":"3,67",
-                       "5":"7,80",
-                       "6":"7,40",
-                       "7":"8,20",
-                       "8":"7,80"
-                    },
-                    {
-                       "0":"Telegram",
-                       "1":"5,75",
-                       "2":"3,75",
-                       "3":"4,25",
-                       "4":"2,50",
-                       "5":"6,00",
-                       "6":"5,25",
-                       "7":"8,25",
-                       "8":"8,75"
-                    },
-                    {
-                       "0":"Trello",
-                       "1":"4,40",
-                       "2":"6,67",
-                       "3":"6,00",
-                       "4":"5,50",
-                       "5":"5,80",
-                       "6":"7,20",
-                       "7":"7,20",
-                       "8":"8,20"
-                    },
-                    {
-                       "0":"Twist",
-                       "1":"8,33",
-                       "2":"5,00",
-                       "3":"7,67",
-                       "4":"4,67",
-                       "5":"4,75",
-                       "6":"7,67",
-                       "7":"8,33",
-                       "8":"7,00"
-                    },
-                    {
-                       "0":"Whatsapp",
-                       "1":"4,00",
-                       "2":"2,80",
-                       "3":"2,60",
-                       "4":"2,00",
-                       "5":"4,25",
-                       "6":"4,60",
-                       "7":"9,00",
-                       "8":"8,80"
+                    {"type":"header","version":"4.8.5","comment":"Export to JSON plugin for PHPMyAdmin"},
+                    {"type":"database","name":"remote_tools"},
+                    {"type":"table","name":"rating_parameters","database":"remote_tools","data":
+                    [
+                    {"id":"1","name":"Conversación de calidad","1_average":"3.33","1_total_ratings":"1","1_average_users":"5","1_total_ratings_users":"1","2_average":"4.5","2_total_ratings":"1","2_average_users":"0","2_total_ratings_users":"0","3_average":"6.25","3_total_ratings":"1","3_average_users":"0","3_total_ratings_users":"0","4_average":"3.67","4_total_ratings":"1","4_average_users":"0","4_total_ratings_users":"0","5_average":"4","5_total_ratings":"1","5_average_users":"0","5_total_ratings_users":"0","6_average":"2","6_total_ratings":"1","6_average_users":"0","6_total_ratings_users":"0","7_average":"5.5","7_total_ratings":"1","7_average_users":"0","7_total_ratings_users":"0","8_average":"4.75","8_total_ratings":"1","8_average_users":"0","8_total_ratings_users":"0","9_average":"7.33","9_total_ratings":"1","9_average_users":"0","9_total_ratings_users":"0","10_average":"5.75","10_total_ratings":"1","10_average_users":"0","10_total_ratings_users":"0","11_average":"4.4","11_total_ratings":"1","11_average_users":"0","11_total_ratings_users":"0","12_average":"8.33","12_total_ratings":"1","12_average_users":"0","12_total_ratings_users":"0","13_average":"4","13_total_ratings":"1","13_average_users":"0","13_total_ratings_users":"0","description":"Sucesión de turnos de habla que se produce al conversar dos o más personas."},
+                    {"id":"2","name":"Management","1_average":"6.33","1_total_ratings":"1","1_average_users":"10","1_total_ratings_users":"1","2_average":"7","2_total_ratings":"1","2_average_users":"0","2_total_ratings_users":"0","3_average":"8.25","3_total_ratings":"1","3_average_users":"0","3_total_ratings_users":"0","4_average":"3.33","4_total_ratings":"1","4_average_users":"0","4_total_ratings_users":"0","5_average":"5","5_total_ratings":"1","5_average_users":"0","5_total_ratings_users":"0","6_average":"3.8","6_total_ratings":"1","6_average_users":"0","6_total_ratings_users":"0","7_average":"6.2","7_total_ratings":"1","7_average_users":"0","7_total_ratings_users":"0","8_average":"8","8_total_ratings":"1","8_average_users":"0","8_total_ratings_users":"0","9_average":"3.5","9_total_ratings":"1","9_average_users":"0","9_total_ratings_users":"0","10_average":"3.75","10_total_ratings":"1","10_average_users":"0","10_total_ratings_users":"0","11_average":"6.67","11_total_ratings":"1","11_average_users":"0","11_total_ratings_users":"0","12_average":"5","12_total_ratings":"1","12_average_users":"0","12_total_ratings_users":"0","13_average":"2.8","13_total_ratings":"1","13_average_users":"0","13_total_ratings_users":"0","description":"Administración o gestión de todas las actividades asignadas por la división de trabajo dentro de una organización. "},
+                    {"id":"3","name":"Calma\/Foco","1_average":"6","1_total_ratings":"1","1_average_users":"8.5","1_total_ratings_users":"2","2_average":"6","2_total_ratings":"1","2_average_users":"0","2_total_ratings_users":"0","3_average":"8.5","3_total_ratings":"1","3_average_users":"0","3_total_ratings_users":"0","4_average":"4","4_total_ratings":"1","4_average_users":"0","4_total_ratings_users":"0","5_average":"6","5_total_ratings":"1","5_average_users":"0","5_total_ratings_users":"0","6_average":"6.4","6_total_ratings":"1","6_average_users":"0","6_total_ratings_users":"0","7_average":"6.8","7_total_ratings":"1","7_average_users":"0","7_total_ratings_users":"0","8_average":"6.25","8_total_ratings":"1","8_average_users":"0","8_total_ratings_users":"0","9_average":"3.33","9_total_ratings":"1","9_average_users":"0","9_total_ratings_users":"0","10_average":"4.25","10_total_ratings":"1","10_average_users":"0","10_total_ratings_users":"0","11_average":"6","11_total_ratings":"1","11_average_users":"0","11_total_ratings_users":"0","12_average":"7.67","12_total_ratings":"1","12_average_users":"0","12_total_ratings_users":"0","13_average":"2.6","13_total_ratings":"1","13_average_users":"0","13_total_ratings_users":"0","description":"Tranquilidad, ausencia de agitación y de nervios"},
+                    {"id":"4","name":"Documentación","1_average":"5","1_total_ratings":"1","1_average_users":"5","1_total_ratings_users":"3","2_average":"5.5","2_total_ratings":"1","2_average_users":"0","2_total_ratings_users":"0","3_average":"7.5","3_total_ratings":"1","3_average_users":"0","3_total_ratings_users":"0","4_average":"4.33","4_total_ratings":"1","4_average_users":"0","4_total_ratings_users":"0","5_average":"7","5_total_ratings":"1","5_average_users":"0","5_total_ratings_users":"0","6_average":"8","6_total_ratings":"1","6_average_users":"0","6_total_ratings_users":"0","7_average":"8.8","7_total_ratings":"1","7_average_users":"0","7_total_ratings_users":"0","8_average":"6.25","8_total_ratings":"1","8_average_users":"0","8_total_ratings_users":"0","9_average":"3.67","9_total_ratings":"1","9_average_users":"0","9_total_ratings_users":"0","10_average":"2.5","10_total_ratings":"1","10_average_users":"0","10_total_ratings_users":"0","11_average":"5.5","11_total_ratings":"1","11_average_users":"0","11_total_ratings_users":"0","12_average":"4.67","12_total_ratings":"1","12_average_users":"0","12_total_ratings_users":"0","13_average":"2","13_total_ratings":"1","13_average_users":"0","13_total_ratings_users":"0","description":"Calidad de las instrucciones para que el usuario aprenda a manejarlo y conozca sus funciones principales."},
+                    {"id":"5","name":"Versatilidad","1_average":"8","1_total_ratings":"1","1_average_users":"0","1_total_ratings_users":"0","2_average":"5.5","2_total_ratings":"1","2_average_users":"0","2_total_ratings_users":"0","3_average":"5","3_total_ratings":"1","3_average_users":"0","3_total_ratings_users":"0","4_average":"5","4_total_ratings":"1","4_average_users":"0","4_total_ratings_users":"0","5_average":"6.5","5_total_ratings":"1","5_average_users":"0","5_total_ratings_users":"0","6_average":"7.5","6_total_ratings":"1","6_average_users":"0","6_total_ratings_users":"0","7_average":"7","7_total_ratings":"1","7_average_users":"0","7_total_ratings_users":"0","8_average":"6.75","8_total_ratings":"1","8_average_users":"0","8_total_ratings_users":"0","9_average":"7.8","9_total_ratings":"1","9_average_users":"0","9_total_ratings_users":"0","10_average":"6","10_total_ratings":"1","10_average_users":"0","10_total_ratings_users":"0","11_average":"5.8","11_total_ratings":"1","11_average_users":"0","11_total_ratings_users":"0","12_average":"4.75","12_total_ratings":"1","12_average_users":"0","12_total_ratings_users":"0","13_average":"4.25","13_total_ratings":"1","13_average_users":"0","13_total_ratings_users":"0","description":"Capacidad de adaptarse con rapidez y facilidad a distintas funciones"},
+                    {"id":"6","name":"Colaboración","1_average":"8","1_total_ratings":"1","1_average_users":"0","1_total_ratings_users":"0","2_average":"6.5","2_total_ratings":"1","2_average_users":"0","2_total_ratings_users":"0","3_average":"8","3_total_ratings":"1","3_average_users":"0","3_total_ratings_users":"0","4_average":"4.2","4_total_ratings":"1","4_average_users":"0","4_total_ratings_users":"0","5_average":"7","5_total_ratings":"1","5_average_users":"0","5_total_ratings_users":"0","6_average":"7.8","6_total_ratings":"1","6_average_users":"0","6_total_ratings_users":"0","7_average":"8","7_total_ratings":"1","7_average_users":"0","7_total_ratings_users":"0","8_average":"6.75","8_total_ratings":"1","8_average_users":"0","8_total_ratings_users":"0","9_average":"7.4","9_total_ratings":"1","9_average_users":"0","9_total_ratings_users":"0","10_average":"5.25","10_total_ratings":"1","10_average_users":"0","10_total_ratings_users":"0","11_average":"7.2","11_total_ratings":"1","11_average_users":"0","11_total_ratings_users":"0","12_average":"7.67","12_total_ratings":"1","12_average_users":"0","12_total_ratings_users":"0","13_average":"4.6","13_total_ratings":"1","13_average_users":"0","13_total_ratings_users":"0","description":"Capacidad de trabajar conjuntamente con otras personas."},
+                    {"id":"7","name":"Simple","1_average":"4.67","1_total_ratings":"1","1_average_users":"0","1_total_ratings_users":"0","2_average":"6.5","2_total_ratings":"1","2_average_users":"0","2_total_ratings_users":"0","3_average":"8","3_total_ratings":"1","3_average_users":"0","3_total_ratings_users":"0","4_average":"8.6","4_total_ratings":"1","4_average_users":"0","4_total_ratings_users":"0","5_average":"7.5","5_total_ratings":"1","5_average_users":"10","5_total_ratings_users":"1","6_average":"8.2","6_total_ratings":"1","6_average_users":"0","6_total_ratings_users":"0","7_average":"7.25","7_total_ratings":"1","7_average_users":"0","7_total_ratings_users":"0","8_average":"4.75","8_total_ratings":"1","8_average_users":"0","8_total_ratings_users":"0","9_average":"8.2","9_total_ratings":"1","9_average_users":"0","9_total_ratings_users":"0","10_average":"8.25","10_total_ratings":"1","10_average_users":"0","10_total_ratings_users":"0","11_average":"7.2","11_total_ratings":"1","11_average_users":"0","11_total_ratings_users":"0","12_average":"8.33","12_total_ratings":"1","12_average_users":"0","12_total_ratings_users":"0","13_average":"9","13_total_ratings":"1","13_average_users":"0","13_total_ratings_users":"0","description":"Sencillo, sin complicaciones ni dificultades"},
+                    {"id":"8","name":"Accesibilidad","1_average":"7","1_total_ratings":"1","1_average_users":"0","1_total_ratings_users":"0","2_average":"7.25","2_total_ratings":"1","2_average_users":"0","2_total_ratings_users":"0","3_average":"8.25","3_total_ratings":"1","3_average_users":"0","3_total_ratings_users":"0","4_average":"9","4_total_ratings":"1","4_average_users":"0","4_total_ratings_users":"0","5_average":"8","5_total_ratings":"1","5_average_users":"0","5_total_ratings_users":"0","6_average":"8.6","6_total_ratings":"1","6_average_users":"0","6_total_ratings_users":"0","7_average":"7.75","7_total_ratings":"1","7_average_users":"0","7_total_ratings_users":"0","8_average":"4","8_total_ratings":"1","8_average_users":"0","8_total_ratings_users":"0","9_average":"7.8","9_total_ratings":"1","9_average_users":"0","9_total_ratings_users":"0","10_average":"8.75","10_total_ratings":"1","10_average_users":"0","10_total_ratings_users":"0","11_average":"8.2","11_total_ratings":"1","11_average_users":"0","11_total_ratings_users":"0","12_average":"7","12_total_ratings":"1","12_average_users":"0","12_total_ratings_users":"0","13_average":"8.8","13_total_ratings":"1","13_average_users":"0","13_total_ratings_users":"0","description":"Facilidad de acceder a la herramienta"}
+                    ]
                     }
-                ];
+                    ,{"type":"table","name":"tools","database":"remote_tools","data":
+                    [
+                    {"id":"1","name":"Airtable","average":"6.04","average_users":"4.25"},
+                    {"id":"2","name":"Asana","average":"6.09","average_users":"0"},
+                    {"id":"3","name":"Basecamp","average":"7.47","average_users":"0"},
+                    {"id":"4","name":"Correo electrónico","average":"5.27","average_users":"0"},
+                    {"id":"5","name":"Dropbox Paper","average":"6.38","average_users":"1.25"},
+                    {"id":"6","name":"Google D","average":"6.54","average_users":"0"},
+                    {"id":"7","name":"Notion","average":"7.16","average_users":"0"},
+                    {"id":"8","name":"Jira","average":"5.94","average_users":"0"},
+                    {"id":"9","name":"Slack","average":"6.13","average_users":"0"},
+                    {"id":"10","name":"Telegram","average":"5.56","average_users":"0"},
+                    {"id":"11","name":"Trello","average":"6.37","average_users":"0"},
+                    {"id":"12","name":"Twist","average":"6.68","average_users":"0"},
+                    {"id":"13","name":"Whatsapp","average":"4.76","average_users":"0"}
+                    ]
+                    }
+                ]
                 setUpAxisDropdowns();
                 loadDataInChart();
-            },
-            updateShowAllTooltips: function(maxWidthForShow) {
-                myChart.options.showAllTooltips = !($(window).width() < maxWidthForShow);
-                myChart.update();
             }
         }
     })();
 
     chartFunctions.init();
     chartFunctions.loadDemoData();
-    chartFunctions.updateShowAllTooltips(960);
-    $(window).resize(function() {
-        chartFunctions.updateShowAllTooltips(960);
-    });
 });
