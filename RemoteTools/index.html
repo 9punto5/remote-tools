@@ -1,351 +1,100 @@
-jQuery( function() {
-    /** 
-     * Chart Functions
-     * 
-    */
-    const chartFunctions = (function() {
-        let myChart,
-        myData,
-        myCurrentXCriteria,
-        myCurrentYCriteria,
-        myXCriteriaSpan,
-        myYCriteriaSpan,
-        lastestWindowWidth,
-        lastestWindowHeight;
-        const myBorderColor = "#00e5c8",
-        myBackgroundColor = "#00e5c8",
-        myPointRadius = 7;
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.6.0/Chart.min.js"></script>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+    <link href="https://fonts.googleapis.com/css?family=Montserrat&display=swap" rel="stylesheet"> 
+    <link rel="stylesheet" href="style.css">
 
-        customizeStyling = function() {
-            Chart.defaults.global.defaultFontColor='white';
-        }
+    <script async src="https://kit.fontawesome.com/e9c08cc795.js" crossorigin="anonymous"></script>
 
-        registerPlugins = function() {
-            // PLUGIN FOR ALWAYS SHOW TOOLTIPS
-            Chart.pluginService.register({
-                beforeRender: function (chart) {
-                    if (chart.config.options.showAllTooltips) {
-                        // create an array of tooltips
-                        // we can't use the chart tooltip because there is only one tooltip per chart
-                        chart.pluginTooltips = [];
-                        chart.config.data.datasets.forEach(function (dataset, i) {
-                            chart.getDatasetMeta(i).data.forEach(function (sector, j) {
-                                chart.pluginTooltips.push(new Chart.Tooltip({
-                                    _chart: chart.chart,
-                                    _chartInstance: chart,
-                                    _data: chart.data,
-                                    _options: chart.options.tooltips,
-                                    _active: [sector]
-                                }, chart));
-                            });
-                        });
-    
-                        // turn off normal tooltips
-                        chart.options.tooltips.enabled = false;
-                    }
-                },
-                afterDraw: function (chart, easing) {
-                    if (chart.config.options.showAllTooltips) {
-                        // we don't want the permanent tooltips to animate, so don't do anything till the animation runs atleast once
-                        if (!chart.allTooltipsOnce) {
-                            if (easing !== 1)
-                                return;
-                            chart.allTooltipsOnce = true;
-                        }
-    
-                        // turn on tooltips
-                        chart.options.tooltips.enabled = true;
-                        Chart.helpers.each(chart.pluginTooltips, function (tooltip) {
-                            tooltip.initialize();
-                            tooltip.update();
-                            // we don't actually need this since we are not animating tooltips
-                            tooltip.pivot();
-                            tooltip.transition(easing).draw();
-                        });
-                        chart.options.tooltips.enabled = false;
-                    }
-                }
-            })
-        }
+    <title>Remote Tools</title>
+</head>
+<body>
+    <div id="content" class="site-content" tabindex="-1" >
+        <div id="primary" class="content-area">
+            <main id="main" class="site-main" role="main">
+                <section class="chart-section">
+                    <div class="container">
+                        <div class="row">
+                            <div class="col">
+                                <div class="title">
+                                    <h2>Herramientas de comunicación, colaboración y management</h2>
+                                    <h3>Existen distintas dimensiones para evaluar la herramienta que mejor puede funcionar para ti o para tu organización, acá una ayuda para evaluar y elegir</h3>
+                                </div>
 
-        loadDataInChart = function() {
-            const chartDatasets = [];
-            for (let i = 0; i < myData[3].data.length; i++) {
-                const xCriteriaScore = myData[2].data[myCurrentXCriteria][(i + 1) + "_average"]
-                const yCriteriaScore = myData[2].data[myCurrentYCriteria][(i + 1) + "_average"]
+                                <div class="chart-container">
+                                    <canvas class="chart" id="chart"></canvas>
 
-                chartDatasets.push({
-                    label: myData[3].data[i].name,
-                    borderColor: myBorderColor,
-                    backgroundColor: myBackgroundColor,
-                    data: [{x: xCriteriaScore, y: yCriteriaScore, r: myPointRadius}]
-                });
-            }
+                                    <div id="xDropdownContainer">
+                                        <div class="dropdown">
+                                            <button class="btn dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                                <span id="criteriaX"></span>
+                                            </button>
+                                            <div id="xDropdownMenu" class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                                            </div>
+                                        </div>
+                                    </div>
 
-            this.updateChart(chartDatasets)
-        }
+                                    <div id="yDropdownContainer">
+                                        <div class="dropdown">
+                                            <button class="btn dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                                <span id="criteriaY"></span>
+                                            </button>
+                                            <div id="yDropdownMenu" class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
 
-        setUpAxisDropdowns = function() {
-            const chartXCriteriaDropdown = $('#xDropdownMenu');
-            const chartYCriteriaDropdown = $('#yDropdownMenu');
-            const ratingParameters = Object.values(myData[2].data);
+                                <div class="axis-info-container">
+                                    <div id="xAxisInfo" class="axis-info">
+                                        <span id="xAxisInfoTitle">Management</span>
+                                        <p id="xAxisInfoDescription">Lorem ipsum dolor sit amet consectetur adipisicing elit. Culpa exercitationem ab illum velit vitae cumque voluptatum? Cum reiciendis, molestias dolorum quo sequi aut aperiam eligendi odit. Quisquam officiis iste cum.</p>
+                                    </div>
+                                    <div id="yAxisInfo" class="axis-info">
+                                        <span id="yAxisInfoTitle">Conversación de calidad</span>
+                                        <p id="yAxisInfoDescription">Lorem ipsum dolor sit amet consectetur adipisicing elit. Culpa exercitationem ab illum velit vitae cumque voluptatum? Cum reiciendis, molestias dolorum quo sequi aut aperiam eligendi odit. Quisquam officiis iste cum.</p>
+                                    </div>
+                                </div>
+                            <div>
+                        </div><!-- #row -->
+                    </div><!-- #container -->
+                </section>
+                        </main><!-- #main -->
+        </div><!-- #primary -->
+    </div><!-- #content -->
 
-            // Add the tool names as items in the axis dropdowns
-            for (let i = 0; i < ratingParameters.length; i++) {
-                chartXCriteriaDropdown.append( '<a class="dropdown-item parameter" role="button" tabindex="0">' + ratingParameters[i].name + '</a>' );
-                chartYCriteriaDropdown.append( '<a class="dropdown-item parameter" role="button" tabindex="0">' + ratingParameters[i].name + '</a>' );
-            }
+    <footer id="footer">
+        <div class="footer-container">
+            <div class="img-container"><img alt="astronautas 9punto5 footer" src="http://localhost/remote-tools/assets/img/ilusfooter.png"></div>
+            <div class="footer-content">
+                <div class="titulo-footer"> Te esperamos en Valdivia </div>
+                <div class="texto-footer"> 9punto5 es un evento e iniciativa sobre cómo debes afrontar el futuro del trabajo. Introducir tecnología a tu negocio, trabajo remoto, manejo de talento y automatización, son las bases para juntarnos cada año en Valdivia. </div>
+                <div class="siguenos-en"> Síguenos En </div>
+                <div class="redes-sociales">
+                    <a aria-label="link a facebook de 9punto5" class="facebook" href="https://www.facebook.com/9punto5/" rel="noopener" target="_blank" title="link a facebook de 9punto5">
+                    </a>
+                    <a aria-label="link a twitter de 9punto5" class="twitter" href="https://twitter.com/9punto5_" rel="noopener" target="_blank" title="link a twitter de 9punto5">
+                    </a>
+                    <a aria-label="link a linkedin de 9punto5" class="linkedin" href="https://www.linkedin.com/company/9punto5/" rel="noopener" target="_blank" title="link a linkedin de 9punto5">
+                    </a>
+                    <a aria-label="link a youtube de 9punto5" class="youtube" href="https://www.youtube.com/channel/UChTbwY8jmyJ6v8FtRf4jx6g" rel="noopener" target="_blank" title="link a youtube de 9punto5">
+                    </a>
+                    <a aria-label="link a instagram de 9punto5" class="instagram" href="https://www.instagram.com/9punto5_/" rel="noopener" target="_blank" title="link a instagram de 9punto5">
+                    </a>
+                </div>
+            </div>
+        </div>
+    </footer>
 
-            // Set click listeners to the tool names (dropdowns items in the axis dropdowns)
-            $('.dropdown-item.parameter').click(function(){
-                const selectedCriteriaIndex =  $(this).index() ;
-                const isDropdownFromXAxis = $(this).parent()[0] == chartXCriteriaDropdown[0];
-        
-                if (isDropdownFromXAxis) {
-                    updateXAxis(selectedCriteriaIndex)
-                } else {
-                    updateYAxis(selectedCriteriaIndex)
-                }
-            });
-        }
 
-        updateXAxis = function(criteriaIndex) {
-            // Swipe axis
-            if (criteriaIndex == myCurrentYCriteria) {
-                myCurrentYCriteria = myCurrentXCriteria;
-            }
-            
-            myCurrentXCriteria = criteriaIndex;
-            this.loadDataInChart();
-        }
-
-        updateYAxis = function(criteriaIndex) {
-            // Swipe axis
-            if (criteriaIndex == myCurrentXCriteria) {
-                myCurrentXCriteria = myCurrentYCriteria;
-            }
-
-            myCurrentYCriteria = criteriaIndex;
-            this.loadDataInChart();
-        }
-
-        updateChart = function(datasets) {
-            // Pop all the data from the myChart
-            myChart.data.datasets.forEach((dataset) => {
-                dataset.data.pop();
-            });
-
-            // Update myChart
-            myChart.data.datasets = datasets;
-            myChart.options.title.text = myData[2].data[myCurrentXCriteria].name + " y " + myData[2].data[myCurrentYCriteria].name;
-            myChart.update();
-
-            // Update Dropdown Text
-            myXCriteriaSpan.textContent = myData[2].data[myCurrentXCriteria].name;
-            myYCriteriaSpan.textContent = myData[2].data[myCurrentYCriteria].name;
-
-            $('#xAxisInfoTitle')[0].textContent = myData[2].data[myCurrentXCriteria].name;
-            $('#yAxisInfoTitle')[0].textContent = myData[2].data[myCurrentYCriteria].name;
-
-            $('#xAxisInfoDescription')[0].textContent = myData[2].data[myCurrentXCriteria].description;
-            $('#yAxisInfoDescription')[0].textContent = myData[2].data[myCurrentYCriteria].description;
-        }
-
-        updateChartOptions = function(windowWidth, windowHeight) {
-            // We don't wanna do nothing when the user scrolls down and the navigator bar hides
-            if (windowWidth == lastestWindowWidth && windowHeight != lastestWindowHeight) {
-                return;
-            }
-
-            lastestWindowWidth = windowWidth;
-            lastestWindowHeight = windowHeight;
-
-            if (windowWidth < 576) {
-                myChart.options.maintainAspectRatio = false;
-
-                if (windowHeight < 420) {
-                    myChart.canvas.parentNode.style.height = windowHeight + 'px';
-                } else if (windowHeight < 550) {
-                    myChart.canvas.parentNode.style.height = (windowHeight / 1.5) + 'px';
-                }
-            } else {
-                myChart.canvas.parentNode.style.height = 'auto';
-                myChart.options.maintainAspectRatio = true;
-            }
-
-            myChart.options.showAllTooltips = !(windowWidth < 960);
-            myChart.update();
-        }
-
-        return {
-            init: function() {
-                const chartCtx = $('#chart')[0].getContext('2d');
-                myXCriteriaSpan = $('#criteriaX')[0];
-                myYCriteriaSpan = $('#criteriaY')[0];
-                myCurrentXCriteria = 0;
-                myCurrentYCriteria = 1;
-                customizeStyling();
-                
-                myChart = new Chart(chartCtx, {
-                    type: 'bubble',
-                    labels: [1,2,3,4,5,6,7,8,9,10],
-                    options: {
-                        responsive: true,
-                        responsiveAnimationDuration: 0,
-                        animation: {
-                            duration: 0
-                        },
-                        hover: {
-                            animationDuration: 0
-                        },
-                        legend: {
-                            display: false,
-                        },
-                        title: {
-                            display: true,
-                            fontSize: 20,
-                            padding: 40
-                        },
-                        scales: {
-                            xAxes: [{
-                                scaleLabel: {
-                                    display: true,
-                                },
-                                ticks:{
-                                    beginAtZero: true,
-                                    maxTicksLimit: 11,
-                                    stepSize: 1,
-                                    max: 10,
-                                    xmin: 0,
-                                    autoSkip: false,
-                                }
-                            }],
-                            yAxes: [{
-                                scaleLabel: {
-                                    display: true,
-                                },
-                                ticks:{
-                                    beginAtZero: true,
-                                    maxTicksLimit: 11,
-                                    stepSize: 1,
-                                    max: 10,
-                                    xmin: 0,
-                                    autoSkip: false,
-                                }
-                            }],
-                        },
-                        tooltips: {
-                            enabled: false,
-                            backgroundColor:"rgba(0,0,0,0)",
-                            callbacks: {
-                                title: function(tooltipItems, data) {
-                                  return data.datasets[tooltipItems[0].datasetIndex].label;
-                                },
-                                label: function(tooltipItem, data) {
-                                    return "";
-                                }
-                            },
-                            custom: function(tooltip) {
-                                let tooltipEl = document.getElementById('chartjs-tooltip');
-                        
-                                if (!tooltipEl) {
-                                    tooltipEl = document.createElement('div');
-                                    tooltipEl.id = 'chartjs-tooltip';
-                                    tooltipEl.innerHTML = '<table></table>';
-                                    this._chart.canvas.parentNode.appendChild(tooltipEl);
-                                }
-                        
-                                // Hide if no tooltip
-                                if (tooltip.opacity === 0) {
-                                    tooltipEl.style.opacity = 0;
-                                    return;
-                                }
-                        
-                                // Set caret Position
-                                tooltipEl.classList.remove('above', 'below', 'no-transform');
-                                if (tooltip.yAlign) {
-                                    tooltipEl.classList.add(tooltip.yAlign);
-                                } else {
-                                    tooltipEl.classList.add('no-transform');
-                                }
-                        
-                                // Set Text
-                                if (tooltip.body) {
-                                    let tableRoot = tooltipEl.querySelector('table');
-                                    const toolName = myData[3].data[tooltip.dataPoints[0]["datasetIndex"]].name;
-                                    const xCriteriaScore = myData[2].data[myCurrentXCriteria].name + ": " + tooltip.dataPoints[0].xLabel;
-                                    const yCriteriaScore = myData[2].data[myCurrentYCriteria].name + ": " + tooltip.dataPoints[0].yLabel;
-                        
-                                    let innerHtml = '<thead></thead>';
-                                    innerHtml += '<tr><td><strong>' + toolName + '</strong></td></tr>';
-                                    innerHtml += '<tr><td>' + xCriteriaScore + '</td></tr>';
-                                    innerHtml += '<tr><td>' + yCriteriaScore + '</td></tr>';
-                        
-                                    tableRoot.innerHTML = innerHtml;
-                                }
-                        
-                                let positionY = this._chart.canvas.offsetTop;
-                                let positionX = this._chart.canvas.offsetLeft;
-                        
-                                // Display, position, and set styles for font
-                                tooltipEl.style.opacity = 1;
-                                tooltipEl.style.left = positionX + tooltip.caretX + 'px';
-                                tooltipEl.style.top = positionY + tooltip.caretY + 'px';
-                                tooltipEl.style.fontFamily = tooltip._bodyFontFamily;
-                                tooltipEl.style.fontSize = tooltip.bodyFontSize + 'px';
-                                tooltipEl.style.fontStyle = tooltip._bodyFontStyle;
-                                tooltipEl.style.padding = tooltip.yPadding + 'px ' + tooltip.xPadding + 'px';
-                            }
-                        },
-                    }
-                });
-
-                registerPlugins();
-                updateChartOptions($(window).width(), $(window).height());
-                $(window).resize(function() {
-                    updateChartOptions($(window).width(), $(window).height())
-                });
-            },
-            loadDemoData: function() {
-                myData = [
-                    {"type":"header","version":"4.8.5","comment":"Export to JSON plugin for PHPMyAdmin"},
-                    {"type":"database","name":"remote_tools"},
-                    {"type":"table","name":"rating_parameters","database":"remote_tools","data":
-                    [
-                    {"id":"1","name":"Conversación de calidad","1_average":"3.33","1_total_ratings":"1","1_average_users":"5","1_total_ratings_users":"1","2_average":"4.5","2_total_ratings":"1","2_average_users":"0","2_total_ratings_users":"0","3_average":"6.25","3_total_ratings":"1","3_average_users":"0","3_total_ratings_users":"0","4_average":"3.67","4_total_ratings":"1","4_average_users":"0","4_total_ratings_users":"0","5_average":"4","5_total_ratings":"1","5_average_users":"0","5_total_ratings_users":"0","6_average":"2","6_total_ratings":"1","6_average_users":"0","6_total_ratings_users":"0","7_average":"5.5","7_total_ratings":"1","7_average_users":"0","7_total_ratings_users":"0","8_average":"4.75","8_total_ratings":"1","8_average_users":"0","8_total_ratings_users":"0","9_average":"7.33","9_total_ratings":"1","9_average_users":"0","9_total_ratings_users":"0","10_average":"5.75","10_total_ratings":"1","10_average_users":"0","10_total_ratings_users":"0","11_average":"4.4","11_total_ratings":"1","11_average_users":"0","11_total_ratings_users":"0","12_average":"8.33","12_total_ratings":"1","12_average_users":"0","12_total_ratings_users":"0","13_average":"4","13_total_ratings":"1","13_average_users":"0","13_total_ratings_users":"0","description":"Sucesión de turnos de habla que se produce al conversar dos o más personas."},
-                    {"id":"2","name":"Management","1_average":"6.33","1_total_ratings":"1","1_average_users":"10","1_total_ratings_users":"1","2_average":"7","2_total_ratings":"1","2_average_users":"0","2_total_ratings_users":"0","3_average":"8.25","3_total_ratings":"1","3_average_users":"0","3_total_ratings_users":"0","4_average":"3.33","4_total_ratings":"1","4_average_users":"0","4_total_ratings_users":"0","5_average":"5","5_total_ratings":"1","5_average_users":"0","5_total_ratings_users":"0","6_average":"3.8","6_total_ratings":"1","6_average_users":"0","6_total_ratings_users":"0","7_average":"6.2","7_total_ratings":"1","7_average_users":"0","7_total_ratings_users":"0","8_average":"8","8_total_ratings":"1","8_average_users":"0","8_total_ratings_users":"0","9_average":"3.5","9_total_ratings":"1","9_average_users":"0","9_total_ratings_users":"0","10_average":"3.75","10_total_ratings":"1","10_average_users":"0","10_total_ratings_users":"0","11_average":"6.67","11_total_ratings":"1","11_average_users":"0","11_total_ratings_users":"0","12_average":"5","12_total_ratings":"1","12_average_users":"0","12_total_ratings_users":"0","13_average":"2.8","13_total_ratings":"1","13_average_users":"0","13_total_ratings_users":"0","description":"Administración o gestión de todas las actividades asignadas por la división de trabajo dentro de una organización. "},
-                    {"id":"3","name":"Calma\/Foco","1_average":"6","1_total_ratings":"1","1_average_users":"8.5","1_total_ratings_users":"2","2_average":"6","2_total_ratings":"1","2_average_users":"0","2_total_ratings_users":"0","3_average":"8.5","3_total_ratings":"1","3_average_users":"0","3_total_ratings_users":"0","4_average":"4","4_total_ratings":"1","4_average_users":"0","4_total_ratings_users":"0","5_average":"6","5_total_ratings":"1","5_average_users":"0","5_total_ratings_users":"0","6_average":"6.4","6_total_ratings":"1","6_average_users":"0","6_total_ratings_users":"0","7_average":"6.8","7_total_ratings":"1","7_average_users":"0","7_total_ratings_users":"0","8_average":"6.25","8_total_ratings":"1","8_average_users":"0","8_total_ratings_users":"0","9_average":"3.33","9_total_ratings":"1","9_average_users":"0","9_total_ratings_users":"0","10_average":"4.25","10_total_ratings":"1","10_average_users":"0","10_total_ratings_users":"0","11_average":"6","11_total_ratings":"1","11_average_users":"0","11_total_ratings_users":"0","12_average":"7.67","12_total_ratings":"1","12_average_users":"0","12_total_ratings_users":"0","13_average":"2.6","13_total_ratings":"1","13_average_users":"0","13_total_ratings_users":"0","description":"Tranquilidad, ausencia de agitación y de nervios"},
-                    {"id":"4","name":"Documentación","1_average":"5","1_total_ratings":"1","1_average_users":"5","1_total_ratings_users":"3","2_average":"5.5","2_total_ratings":"1","2_average_users":"0","2_total_ratings_users":"0","3_average":"7.5","3_total_ratings":"1","3_average_users":"0","3_total_ratings_users":"0","4_average":"4.33","4_total_ratings":"1","4_average_users":"0","4_total_ratings_users":"0","5_average":"7","5_total_ratings":"1","5_average_users":"0","5_total_ratings_users":"0","6_average":"8","6_total_ratings":"1","6_average_users":"0","6_total_ratings_users":"0","7_average":"8.8","7_total_ratings":"1","7_average_users":"0","7_total_ratings_users":"0","8_average":"6.25","8_total_ratings":"1","8_average_users":"0","8_total_ratings_users":"0","9_average":"3.67","9_total_ratings":"1","9_average_users":"0","9_total_ratings_users":"0","10_average":"2.5","10_total_ratings":"1","10_average_users":"0","10_total_ratings_users":"0","11_average":"5.5","11_total_ratings":"1","11_average_users":"0","11_total_ratings_users":"0","12_average":"4.67","12_total_ratings":"1","12_average_users":"0","12_total_ratings_users":"0","13_average":"2","13_total_ratings":"1","13_average_users":"0","13_total_ratings_users":"0","description":"Calidad de las instrucciones para que el usuario aprenda a manejarlo y conozca sus funciones principales."},
-                    {"id":"5","name":"Versatilidad","1_average":"8","1_total_ratings":"1","1_average_users":"0","1_total_ratings_users":"0","2_average":"5.5","2_total_ratings":"1","2_average_users":"0","2_total_ratings_users":"0","3_average":"5","3_total_ratings":"1","3_average_users":"0","3_total_ratings_users":"0","4_average":"5","4_total_ratings":"1","4_average_users":"0","4_total_ratings_users":"0","5_average":"6.5","5_total_ratings":"1","5_average_users":"0","5_total_ratings_users":"0","6_average":"7.5","6_total_ratings":"1","6_average_users":"0","6_total_ratings_users":"0","7_average":"7","7_total_ratings":"1","7_average_users":"0","7_total_ratings_users":"0","8_average":"6.75","8_total_ratings":"1","8_average_users":"0","8_total_ratings_users":"0","9_average":"7.8","9_total_ratings":"1","9_average_users":"0","9_total_ratings_users":"0","10_average":"6","10_total_ratings":"1","10_average_users":"0","10_total_ratings_users":"0","11_average":"5.8","11_total_ratings":"1","11_average_users":"0","11_total_ratings_users":"0","12_average":"4.75","12_total_ratings":"1","12_average_users":"0","12_total_ratings_users":"0","13_average":"4.25","13_total_ratings":"1","13_average_users":"0","13_total_ratings_users":"0","description":"Capacidad de adaptarse con rapidez y facilidad a distintas funciones"},
-                    {"id":"6","name":"Colaboración","1_average":"8","1_total_ratings":"1","1_average_users":"0","1_total_ratings_users":"0","2_average":"6.5","2_total_ratings":"1","2_average_users":"0","2_total_ratings_users":"0","3_average":"8","3_total_ratings":"1","3_average_users":"0","3_total_ratings_users":"0","4_average":"4.2","4_total_ratings":"1","4_average_users":"0","4_total_ratings_users":"0","5_average":"7","5_total_ratings":"1","5_average_users":"0","5_total_ratings_users":"0","6_average":"7.8","6_total_ratings":"1","6_average_users":"0","6_total_ratings_users":"0","7_average":"8","7_total_ratings":"1","7_average_users":"0","7_total_ratings_users":"0","8_average":"6.75","8_total_ratings":"1","8_average_users":"0","8_total_ratings_users":"0","9_average":"7.4","9_total_ratings":"1","9_average_users":"0","9_total_ratings_users":"0","10_average":"5.25","10_total_ratings":"1","10_average_users":"0","10_total_ratings_users":"0","11_average":"7.2","11_total_ratings":"1","11_average_users":"0","11_total_ratings_users":"0","12_average":"7.67","12_total_ratings":"1","12_average_users":"0","12_total_ratings_users":"0","13_average":"4.6","13_total_ratings":"1","13_average_users":"0","13_total_ratings_users":"0","description":"Capacidad de trabajar conjuntamente con otras personas."},
-                    {"id":"7","name":"Simple","1_average":"4.67","1_total_ratings":"1","1_average_users":"0","1_total_ratings_users":"0","2_average":"6.5","2_total_ratings":"1","2_average_users":"0","2_total_ratings_users":"0","3_average":"8","3_total_ratings":"1","3_average_users":"0","3_total_ratings_users":"0","4_average":"8.6","4_total_ratings":"1","4_average_users":"0","4_total_ratings_users":"0","5_average":"7.5","5_total_ratings":"1","5_average_users":"10","5_total_ratings_users":"1","6_average":"8.2","6_total_ratings":"1","6_average_users":"0","6_total_ratings_users":"0","7_average":"7.25","7_total_ratings":"1","7_average_users":"0","7_total_ratings_users":"0","8_average":"4.75","8_total_ratings":"1","8_average_users":"0","8_total_ratings_users":"0","9_average":"8.2","9_total_ratings":"1","9_average_users":"0","9_total_ratings_users":"0","10_average":"8.25","10_total_ratings":"1","10_average_users":"0","10_total_ratings_users":"0","11_average":"7.2","11_total_ratings":"1","11_average_users":"0","11_total_ratings_users":"0","12_average":"8.33","12_total_ratings":"1","12_average_users":"0","12_total_ratings_users":"0","13_average":"9","13_total_ratings":"1","13_average_users":"0","13_total_ratings_users":"0","description":"Sencillo, sin complicaciones ni dificultades"},
-                    {"id":"8","name":"Accesibilidad","1_average":"7","1_total_ratings":"1","1_average_users":"0","1_total_ratings_users":"0","2_average":"7.25","2_total_ratings":"1","2_average_users":"0","2_total_ratings_users":"0","3_average":"8.25","3_total_ratings":"1","3_average_users":"0","3_total_ratings_users":"0","4_average":"9","4_total_ratings":"1","4_average_users":"0","4_total_ratings_users":"0","5_average":"8","5_total_ratings":"1","5_average_users":"0","5_total_ratings_users":"0","6_average":"8.6","6_total_ratings":"1","6_average_users":"0","6_total_ratings_users":"0","7_average":"7.75","7_total_ratings":"1","7_average_users":"0","7_total_ratings_users":"0","8_average":"4","8_total_ratings":"1","8_average_users":"0","8_total_ratings_users":"0","9_average":"7.8","9_total_ratings":"1","9_average_users":"0","9_total_ratings_users":"0","10_average":"8.75","10_total_ratings":"1","10_average_users":"0","10_total_ratings_users":"0","11_average":"8.2","11_total_ratings":"1","11_average_users":"0","11_total_ratings_users":"0","12_average":"7","12_total_ratings":"1","12_average_users":"0","12_total_ratings_users":"0","13_average":"8.8","13_total_ratings":"1","13_average_users":"0","13_total_ratings_users":"0","description":"Facilidad de acceder a la herramienta"}
-                    ]
-                    }
-                    ,{"type":"table","name":"tools","database":"remote_tools","data":
-                    [
-                    {"id":"1","name":"Airtable","average":"6.04","average_users":"4.25"},
-                    {"id":"2","name":"Asana","average":"6.09","average_users":"0"},
-                    {"id":"3","name":"Basecamp","average":"7.47","average_users":"0"},
-                    {"id":"4","name":"Correo electrónico","average":"5.27","average_users":"0"},
-                    {"id":"5","name":"Dropbox Paper","average":"6.38","average_users":"1.25"},
-                    {"id":"6","name":"Google D","average":"6.54","average_users":"0"},
-                    {"id":"7","name":"Notion","average":"7.16","average_users":"0"},
-                    {"id":"8","name":"Jira","average":"5.94","average_users":"0"},
-                    {"id":"9","name":"Slack","average":"6.13","average_users":"0"},
-                    {"id":"10","name":"Telegram","average":"5.56","average_users":"0"},
-                    {"id":"11","name":"Trello","average":"6.37","average_users":"0"},
-                    {"id":"12","name":"Twist","average":"6.68","average_users":"0"},
-                    {"id":"13","name":"Whatsapp","average":"4.76","average_users":"0"}
-                    ]
-                    }
-                ]
-                setUpAxisDropdowns();
-                loadDataInChart();
-            }
-        }
-    })();
-
-    chartFunctions.init();
-    chartFunctions.loadDemoData();
-});
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
+    <script type="text/javascript" src="js/scripts.js"></script>
+</body>
+</html>
