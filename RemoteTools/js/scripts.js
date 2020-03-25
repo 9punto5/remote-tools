@@ -152,6 +152,9 @@ jQuery( function() {
         }
 
         updateChartOptions = function(windowWidth, windowHeight) {
+            console.log("Here")
+            $('#yDropdownContainer').width($('.chart-container').height()); 
+
             // We don't wanna do nothing when the user scrolls down and the navigator bar hides
             if (windowWidth == lastestWindowWidth && windowHeight != lastestWindowHeight) {
                 return;
@@ -165,8 +168,10 @@ jQuery( function() {
 
                 if (windowHeight < 420) {
                     myChart.canvas.parentNode.style.height = windowHeight + 'px';
-                } else if (windowHeight < 550) {
+                } else if (windowHeight < 600) {
                     myChart.canvas.parentNode.style.height = (windowHeight / 1.5) + 'px';
+                } else if (windowHeight < 900) {
+                    myChart.canvas.parentNode.style.height = (windowHeight / 2.5) + 'px';
                 }
             } else {
                 myChart.canvas.parentNode.style.height = 'auto';
