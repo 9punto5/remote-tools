@@ -479,22 +479,36 @@ pre code {
 
 #yDropdownContainer {
   position: absolute;
-  height: 100%;
-  top: 0;
-  writing-mode: sideways-lr; }
+  -webkit-transform: rotate(270deg);
+  transform: rotate(270deg);
+  transform-origin: 51% 58%;
+  bottom: 44%;
+  left: -23%; }
+  @media screen and (max-width: 1200px) {
+    #yDropdownContainer {
+      left: -22%; } }
+  @media screen and (max-width: 990px) {
+    #yDropdownContainer {
+      left: -21%; } }
+  @media screen and (max-width: 767px) {
+    #yDropdownContainer {
+      left: -20%; } }
+  @media screen and (max-width: 767px) {
+    #yDropdownContainer {
+      left: -20%; } }
+  @media screen and (max-width: 575px) {
+    #yDropdownContainer {
+      left: -19%; } }
   #yDropdownContainer .btn:hover span {
-    border-right: 1px solid #fff; }
+    border-bottom: 1px solid #fff; }
   #yDropdownContainer .dropdown {
-    margin-top: auto;
-    margin-bottom: auto;
-    height: max-content; }
+    margin-left: auto;
+    margin-right: auto;
+    width: max-content; }
   #yDropdownContainer .dropdown-menu {
-    transform: none !important;
-    rotate: 90deg;
-    top: -50% !important;
-    left: 100% !important; }
-    #yDropdownContainer .dropdown-menu .dropdown-item {
-      padding: 1.5rem 0.25rem !important; }
+    -webkit-transform: rotate(90deg) !important;
+    transform: rotate(90deg) !important;
+    transform-origin: 51% 58%; }
 
 #xDropdownContainer {
   position: absolute;
@@ -521,8 +535,23 @@ pre code {
   .axis-info span {
     font-weight: 600; }
 
+.dropdown-menu {
+  padding: 0 !important;
+  color: #fff !important;
+  background-color: #3d1797 !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important; }
+
+.dropdown-item {
+  cursor: pointer; }
+
+.dropdown-item:focus, .dropdown-item:hover {
+  color: #c6c6c6;
+  background-color: #f8f9fa21; }
+
 #rating-section {
-  background: linear-gradient(59.09deg, #5522ac 0, #401a9a 100%); }
+  background: linear-gradient(59.09deg, #5522ac 0, #401a9a 100%);
+  max-width: 100vw;
+  overflow: hidden; }
   #rating-section .btn {
     color: #ffffff; }
   #rating-section table {
