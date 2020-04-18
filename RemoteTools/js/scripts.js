@@ -4,17 +4,17 @@ jQuery( function() {
      * 
     */
     const chartFunctions = (function() {
-        let myChart,
-        myData,
-        myCurrentXCriteria,
-        myCurrentYCriteria,
-        myXCriteriaSpan,
-        myYCriteriaSpan,
+        let chartData,
+        currentXCriteria,
+        currentYCriteria,
+        xCriteriaSpan,
+        yCriteriaSpan,
         lastestWindowWidth,
         lastestWindowHeight;
-        const myBorderColor = "#00e5c8",
-        myBackgroundColor = "#00e5c8",
-        myPointRadius = 7;
+
+        const borderColor = "#00e5c8",
+        backgroundColor = "#00e5c8",
+        pointRadius = 7;
 
         customizeStyling = function() {
             Chart.defaults.global.defaultFontColor='white';
@@ -69,16 +69,25 @@ jQuery( function() {
         }
 
         loadDataInChart = function() {
+
             const chartDatasets = [];
-            for (let i = 0; i < myData["tools_data"].length; i++) {
-                const xCriteriaScore = myData["rating_parameters_data"][myCurrentXCriteria][(i + 1) + "_average"]
-                const yCriteriaScore = myData["rating_parameters_data"][myCurrentYCriteria][(i + 1) + "_average"]
+            const toQuery = chartData["rating_parameters_averages"];
+
+            for (let i = 0; i < chartData["tools"].length; i++) {
+
+                const x = toQuery.filter( function(item){
+                    return (item.id=="" + (i + 1) + (currentXCriteria + 1));
+                })[0].rating;
+
+                const y = toQuery.filter( function(item){
+                    return (item.id=="" + (i + 1) + (currentYCriteria + 1));
+                } )[0].rating;
 
                 chartDatasets.push({
-                    label: myData["tools_data"][i].name,
-                    borderColor: myBorderColor,
-                    backgroundColor: myBackgroundColor,
-                    data: [{x: xCriteriaScore, y: yCriteriaScore, r: myPointRadius}]
+                    label: chartData["tools"][i].name,
+                    borderColor: borderColor,
+                    backgroundColor: backgroundColor,
+                    data: [{x: x, y: y, r: pointRadius}]
                 });
             }
 
@@ -88,7 +97,7 @@ jQuery( function() {
         setUpAxisDropdowns = function() {
             const chartXCriteriaDropdown = $('#xDropdownMenu');
             const chartYCriteriaDropdown = $('#yDropdownMenu');
-            const ratingParameters = Object.values(myData["rating_parameters_data"]);
+            const ratingParameters = chartData["tool_rating_parameters"];
 
             // Add the tool names as items in the axis dropdowns
             for (let i = 0; i < ratingParameters.length; i++) {
@@ -111,48 +120,50 @@ jQuery( function() {
 
         updateXAxis = function(criteriaIndex) {
             // Swipe axis
-            if (criteriaIndex == myCurrentYCriteria) {
-                myCurrentYCriteria = myCurrentXCriteria;
+            if (criteriaIndex == currentYCriteria) {
+                currentYCriteria = currentXCriteria;
             }
             
-            myCurrentXCriteria = criteriaIndex;
+            currentXCriteria = criteriaIndex;
             this.loadDataInChart();
         }
 
         updateYAxis = function(criteriaIndex) {
             // Swipe axis
-            if (criteriaIndex == myCurrentXCriteria) {
-                myCurrentXCriteria = myCurrentYCriteria;
+            if (criteriaIndex == currentXCriteria) {
+                currentXCriteria = currentYCriteria;
             }
 
-            myCurrentYCriteria = criteriaIndex;
+            currentYCriteria = criteriaIndex;
             this.loadDataInChart();
         }
 
         updateChart = function(datasets) {
-            // Pop all the data from the myChart
-            myChart.data.datasets.forEach((dataset) => {
+            // Pop all the data from the chart
+            chart.data.datasets.forEach((dataset) => {
                 dataset.data.pop();
             });
 
-            // Update myChart
-            myChart.data.datasets = datasets;
-            myChart.options.title.text = myData["rating_parameters_data"][myCurrentXCriteria].name + " y " + myData["rating_parameters_data"][myCurrentYCriteria].name;
-            myChart.update();
+            // Update chart
+            chart.data.datasets = datasets;
+            chart.options.title.text = chartData["tool_rating_parameters"][currentXCriteria].name 
+            + " y " + chartData["tool_rating_parameters"][currentYCriteria].name;
+            chart.update();
 
             // Update Dropdown Text
-            myXCriteriaSpan.textContent = myData["rating_parameters_data"][myCurrentXCriteria].name;
-            myYCriteriaSpan.textContent = myData["rating_parameters_data"][myCurrentYCriteria].name;
+            xCriteriaSpan.textContent = chartData["tool_rating_parameters"][currentXCriteria].name;
+            yCriteriaSpan.textContent = chartData["tool_rating_parameters"][currentYCriteria].name;
 
-            $('#xAxisInfoTitle')[0].textContent = myData["rating_parameters_data"][myCurrentXCriteria].name;
-            $('#yAxisInfoTitle')[0].textContent = myData["rating_parameters_data"][myCurrentYCriteria].name;
+            $('#xAxisInfoTitle')[0].textContent = chartData["tool_rating_parameters"][currentXCriteria].name;
+            $('#yAxisInfoTitle')[0].textContent = chartData["tool_rating_parameters"][currentYCriteria].name;
 
-            $('#xAxisInfoDescription')[0].textContent = myData["rating_parameters_data"][myCurrentXCriteria].description;
-            $('#yAxisInfoDescription')[0].textContent = myData["rating_parameters_data"][myCurrentYCriteria].description;
+            $('#xAxisInfoDescription')[0].textContent = chartData["tool_rating_parameters"][currentXCriteria].description;
+            $('#yAxisInfoDescription')[0].textContent = chartData["tool_rating_parameters"][currentYCriteria].description;
+
+            $('#yDropdownContainer').width($('.chart-container').height());
         }
 
         updateChartOptions = function(windowWidth, windowHeight) {
-            console.log("Here")
             $('#yDropdownContainer').width($('.chart-container').height()); 
 
             // We don't wanna do nothing when the user scrolls down and the navigator bar hides
@@ -164,34 +175,34 @@ jQuery( function() {
             lastestWindowHeight = windowHeight;
 
             if (windowWidth < 576) {
-                myChart.options.maintainAspectRatio = false;
+                chart.options.maintainAspectRatio = false;
 
                 if (windowHeight < 420) {
-                    myChart.canvas.parentNode.style.height = windowHeight + 'px';
+                    chart.canvas.parentNode.style.height = windowHeight + 'px';
                 } else if (windowHeight < 600) {
-                    myChart.canvas.parentNode.style.height = (windowHeight / 1.5) + 'px';
+                    chart.canvas.parentNode.style.height = (windowHeight / 1.5) + 'px';
                 } else if (windowHeight < 900) {
-                    myChart.canvas.parentNode.style.height = (windowHeight / 2.5) + 'px';
+                    chart.canvas.parentNode.style.height = (windowHeight / 2.5) + 'px';
                 }
             } else {
-                myChart.canvas.parentNode.style.height = 'auto';
-                myChart.options.maintainAspectRatio = true;
+                chart.canvas.parentNode.style.height = 'auto';
+                chart.options.maintainAspectRatio = true;
             }
 
-            myChart.options.showAllTooltips = !(windowWidth < 960);
-            myChart.update();
+            chart.options.showAllTooltips = !(windowWidth < 960);
+            chart.update();
         }
 
         return {
             init: function() {
                 const chartCtx = $('#chart')[0].getContext('2d');
-                myXCriteriaSpan = $('#criteriaX')[0];
-                myYCriteriaSpan = $('#criteriaY')[0];
-                myCurrentXCriteria = 0;
-                myCurrentYCriteria = 1;
+                xCriteriaSpan = $('#criteriaX')[0];
+                yCriteriaSpan = $('#criteriaY')[0];
+                currentXCriteria = 0;
+                currentYCriteria = 1;
                 customizeStyling();
                 
-                myChart = new Chart(chartCtx, {
+                chart = new Chart(chartCtx, {
                     type: 'bubble',
                     labels: [1,2,3,4,5,6,7,8,9,10],
                     options: {
@@ -277,9 +288,9 @@ jQuery( function() {
                                 // Set Text
                                 if (tooltip.body) {
                                     let tableRoot = tooltipEl.querySelector('table');
-                                    const toolName = myData["tools_data"][tooltip.dataPoints[0]["datasetIndex"]].name;
-                                    const xCriteriaScore = myData["rating_parameters_data"][myCurrentXCriteria].name + ": " + tooltip.dataPoints[0].xLabel;
-                                    const yCriteriaScore = myData["rating_parameters_data"][myCurrentYCriteria].name + ": " + tooltip.dataPoints[0].yLabel;
+                                    const toolName = chartData["tools"][tooltip.dataPoints[0]["datasetIndex"]].name;
+                                    const xCriteriaScore = chartData["tool_rating_parameters"][currentXCriteria].name + ": " + tooltip.dataPoints[0].xLabel;
+                                    const yCriteriaScore = chartData["tool_rating_parameters"][currentYCriteria].name + ": " + tooltip.dataPoints[0].yLabel;
                         
                                     let innerHtml = '<thead></thead>';
                                     innerHtml += '<tr><td><strong>' + toolName + '</strong></td></tr>';
@@ -308,64 +319,240 @@ jQuery( function() {
                 registerPlugins();
                 updateChartOptions($(window).width(), $(window).height());
                 $(window).resize(function() {
+                    $('#yDropdownContainer').width($('.chart-container').height()); 
                     updateChartOptions($(window).width(), $(window).height())
                 });
             },
             loadDemoData: function() {
-                myData = {
-                    "rating_parameters_data":[
-                        {"id":"1","name":"Conversación de calidad","1_average":"3.33","1_total_ratings":"1","1_average_users":"5","1_total_ratings_users":"1","2_average":"4.5","2_total_ratings":"1","2_average_users":"0","2_total_ratings_users":"0","3_average":"6.25","3_total_ratings":"1","3_average_users":"0","3_total_ratings_users":"0","4_average":"3.67","4_total_ratings":"1","4_average_users":"0","4_total_ratings_users":"0","5_average":"4","5_total_ratings":"1","5_average_users":"0","5_total_ratings_users":"0","6_average":"2","6_total_ratings":"1","6_average_users":"0","6_total_ratings_users":"0","7_average":"5.5","7_total_ratings":"1","7_average_users":"0","7_total_ratings_users":"0","8_average":"4.75","8_total_ratings":"1","8_average_users":"0","8_total_ratings_users":"0","9_average":"7.33","9_total_ratings":"1","9_average_users":"0","9_total_ratings_users":"0","10_average":"5.75","10_total_ratings":"1","10_average_users":"0","10_total_ratings_users":"0","11_average":"4.4","11_total_ratings":"1","11_average_users":"0","11_total_ratings_users":"0","12_average":"8.33","12_total_ratings":"1","12_average_users":"0","12_total_ratings_users":"0","13_average":"4","13_total_ratings":"1","13_average_users":"0","13_total_ratings_users":"0","description":"Sucesión de turnos de habla que se produce al conversar dos o más personas."},
-                        {"id":"2","name":"Management","1_average":"6.33","1_total_ratings":"1","1_average_users":"10","1_total_ratings_users":"1","2_average":"7","2_total_ratings":"1","2_average_users":"0","2_total_ratings_users":"0","3_average":"8.25","3_total_ratings":"1","3_average_users":"0","3_total_ratings_users":"0","4_average":"3.33","4_total_ratings":"1","4_average_users":"0","4_total_ratings_users":"0","5_average":"5","5_total_ratings":"1","5_average_users":"0","5_total_ratings_users":"0","6_average":"3.8","6_total_ratings":"1","6_average_users":"0","6_total_ratings_users":"0","7_average":"6.2","7_total_ratings":"1","7_average_users":"0","7_total_ratings_users":"0","8_average":"8","8_total_ratings":"1","8_average_users":"0","8_total_ratings_users":"0","9_average":"3.5","9_total_ratings":"1","9_average_users":"0","9_total_ratings_users":"0","10_average":"3.75","10_total_ratings":"1","10_average_users":"0","10_total_ratings_users":"0","11_average":"6.67","11_total_ratings":"1","11_average_users":"0","11_total_ratings_users":"0","12_average":"5","12_total_ratings":"1","12_average_users":"0","12_total_ratings_users":"0","13_average":"2.8","13_total_ratings":"1","13_average_users":"0","13_total_ratings_users":"0","description":"Administración o gestión de todas las actividades asignadas por la división de trabajo dentro de una organización. "},
-                        {"id":"3","name":"Calma\/Foco","1_average":"6","1_total_ratings":"1","1_average_users":"8.5","1_total_ratings_users":"2","2_average":"6","2_total_ratings":"1","2_average_users":"0","2_total_ratings_users":"0","3_average":"8.5","3_total_ratings":"1","3_average_users":"0","3_total_ratings_users":"0","4_average":"4","4_total_ratings":"1","4_average_users":"0","4_total_ratings_users":"0","5_average":"6","5_total_ratings":"1","5_average_users":"0","5_total_ratings_users":"0","6_average":"6.4","6_total_ratings":"1","6_average_users":"0","6_total_ratings_users":"0","7_average":"6.8","7_total_ratings":"1","7_average_users":"0","7_total_ratings_users":"0","8_average":"6.25","8_total_ratings":"1","8_average_users":"0","8_total_ratings_users":"0","9_average":"3.33","9_total_ratings":"1","9_average_users":"0","9_total_ratings_users":"0","10_average":"4.25","10_total_ratings":"1","10_average_users":"0","10_total_ratings_users":"0","11_average":"6","11_total_ratings":"1","11_average_users":"0","11_total_ratings_users":"0","12_average":"7.67","12_total_ratings":"1","12_average_users":"0","12_total_ratings_users":"0","13_average":"2.6","13_total_ratings":"1","13_average_users":"0","13_total_ratings_users":"0","description":"Tranquilidad, ausencia de agitación y de nervios"},
-                        {"id":"4","name":"Documentación","1_average":"5","1_total_ratings":"1","1_average_users":"5","1_total_ratings_users":"3","2_average":"5.5","2_total_ratings":"1","2_average_users":"0","2_total_ratings_users":"0","3_average":"7.5","3_total_ratings":"1","3_average_users":"0","3_total_ratings_users":"0","4_average":"4.33","4_total_ratings":"1","4_average_users":"0","4_total_ratings_users":"0","5_average":"7","5_total_ratings":"1","5_average_users":"0","5_total_ratings_users":"0","6_average":"8","6_total_ratings":"1","6_average_users":"0","6_total_ratings_users":"0","7_average":"8.8","7_total_ratings":"1","7_average_users":"0","7_total_ratings_users":"0","8_average":"6.25","8_total_ratings":"1","8_average_users":"0","8_total_ratings_users":"0","9_average":"3.67","9_total_ratings":"1","9_average_users":"0","9_total_ratings_users":"0","10_average":"2.5","10_total_ratings":"1","10_average_users":"0","10_total_ratings_users":"0","11_average":"5.5","11_total_ratings":"1","11_average_users":"0","11_total_ratings_users":"0","12_average":"4.67","12_total_ratings":"1","12_average_users":"0","12_total_ratings_users":"0","13_average":"2","13_total_ratings":"1","13_average_users":"0","13_total_ratings_users":"0","description":"Calidad de las instrucciones para que el usuario aprenda a manejarlo y conozca sus funciones principales."},
-                        {"id":"5","name":"Versatilidad","1_average":"8","1_total_ratings":"1","1_average_users":"0","1_total_ratings_users":"0","2_average":"5.5","2_total_ratings":"1","2_average_users":"0","2_total_ratings_users":"0","3_average":"5","3_total_ratings":"1","3_average_users":"0","3_total_ratings_users":"0","4_average":"5","4_total_ratings":"1","4_average_users":"0","4_total_ratings_users":"0","5_average":"6.5","5_total_ratings":"1","5_average_users":"0","5_total_ratings_users":"0","6_average":"7.5","6_total_ratings":"1","6_average_users":"0","6_total_ratings_users":"0","7_average":"7","7_total_ratings":"1","7_average_users":"0","7_total_ratings_users":"0","8_average":"6.75","8_total_ratings":"1","8_average_users":"0","8_total_ratings_users":"0","9_average":"7.8","9_total_ratings":"1","9_average_users":"0","9_total_ratings_users":"0","10_average":"6","10_total_ratings":"1","10_average_users":"0","10_total_ratings_users":"0","11_average":"5.8","11_total_ratings":"1","11_average_users":"0","11_total_ratings_users":"0","12_average":"4.75","12_total_ratings":"1","12_average_users":"0","12_total_ratings_users":"0","13_average":"4.25","13_total_ratings":"1","13_average_users":"0","13_total_ratings_users":"0","description":"Capacidad de adaptarse con rapidez y facilidad a distintas funciones"},
-                        {"id":"6","name":"Colaboración","1_average":"8","1_total_ratings":"1","1_average_users":"0","1_total_ratings_users":"0","2_average":"6.5","2_total_ratings":"1","2_average_users":"0","2_total_ratings_users":"0","3_average":"8","3_total_ratings":"1","3_average_users":"0","3_total_ratings_users":"0","4_average":"4.2","4_total_ratings":"1","4_average_users":"0","4_total_ratings_users":"0","5_average":"7","5_total_ratings":"1","5_average_users":"0","5_total_ratings_users":"0","6_average":"7.8","6_total_ratings":"1","6_average_users":"0","6_total_ratings_users":"0","7_average":"8","7_total_ratings":"1","7_average_users":"0","7_total_ratings_users":"0","8_average":"6.75","8_total_ratings":"1","8_average_users":"0","8_total_ratings_users":"0","9_average":"7.4","9_total_ratings":"1","9_average_users":"0","9_total_ratings_users":"0","10_average":"5.25","10_total_ratings":"1","10_average_users":"0","10_total_ratings_users":"0","11_average":"7.2","11_total_ratings":"1","11_average_users":"0","11_total_ratings_users":"0","12_average":"7.67","12_total_ratings":"1","12_average_users":"0","12_total_ratings_users":"0","13_average":"4.6","13_total_ratings":"1","13_average_users":"0","13_total_ratings_users":"0","description":"Capacidad de trabajar conjuntamente con otras personas."},
-                        {"id":"7","name":"Simple","1_average":"4.67","1_total_ratings":"1","1_average_users":"0","1_total_ratings_users":"0","2_average":"6.5","2_total_ratings":"1","2_average_users":"0","2_total_ratings_users":"0","3_average":"8","3_total_ratings":"1","3_average_users":"0","3_total_ratings_users":"0","4_average":"8.6","4_total_ratings":"1","4_average_users":"0","4_total_ratings_users":"0","5_average":"7.5","5_total_ratings":"1","5_average_users":"10","5_total_ratings_users":"1","6_average":"8.2","6_total_ratings":"1","6_average_users":"0","6_total_ratings_users":"0","7_average":"7.25","7_total_ratings":"1","7_average_users":"0","7_total_ratings_users":"0","8_average":"4.75","8_total_ratings":"1","8_average_users":"0","8_total_ratings_users":"0","9_average":"8.2","9_total_ratings":"1","9_average_users":"0","9_total_ratings_users":"0","10_average":"8.25","10_total_ratings":"1","10_average_users":"0","10_total_ratings_users":"0","11_average":"7.2","11_total_ratings":"1","11_average_users":"0","11_total_ratings_users":"0","12_average":"8.33","12_total_ratings":"1","12_average_users":"0","12_total_ratings_users":"0","13_average":"9","13_total_ratings":"1","13_average_users":"0","13_total_ratings_users":"0","description":"Sencillo, sin complicaciones ni dificultades"},
-                        {"id":"8","name":"Accesibilidad","1_average":"7","1_total_ratings":"1","1_average_users":"0","1_total_ratings_users":"0","2_average":"7.25","2_total_ratings":"1","2_average_users":"0","2_total_ratings_users":"0","3_average":"8.25","3_total_ratings":"1","3_average_users":"0","3_total_ratings_users":"0","4_average":"9","4_total_ratings":"1","4_average_users":"0","4_total_ratings_users":"0","5_average":"8","5_total_ratings":"1","5_average_users":"0","5_total_ratings_users":"0","6_average":"8.6","6_total_ratings":"1","6_average_users":"0","6_total_ratings_users":"0","7_average":"7.75","7_total_ratings":"1","7_average_users":"0","7_total_ratings_users":"0","8_average":"4","8_total_ratings":"1","8_average_users":"0","8_total_ratings_users":"0","9_average":"7.8","9_total_ratings":"1","9_average_users":"0","9_total_ratings_users":"0","10_average":"8.75","10_total_ratings":"1","10_average_users":"0","10_total_ratings_users":"0","11_average":"8.2","11_total_ratings":"1","11_average_users":"0","11_total_ratings_users":"0","12_average":"7","12_total_ratings":"1","12_average_users":"0","12_total_ratings_users":"0","13_average":"8.8","13_total_ratings":"1","13_average_users":"0","13_total_ratings_users":"0","description":"Facilidad de acceder a la herramienta"}
-                    ],
-                    "tools_data":[
-                        {"id":"1","name":"Airtable","average":"6.04","average_users":"4.25"},
-                        {"id":"2","name":"Asana","average":"6.09","average_users":"0"},
-                        {"id":"3","name":"Basecamp","average":"7.47","average_users":"0"},
-                        {"id":"4","name":"Correo electrónico","average":"5.27","average_users":"0"},
-                        {"id":"5","name":"Dropbox Paper","average":"6.38","average_users":"1.25"},
-                        {"id":"6","name":"Google D","average":"6.54","average_users":"0"},
-                        {"id":"7","name":"Notion","average":"7.16","average_users":"0"},
-                        {"id":"8","name":"Jira","average":"5.94","average_users":"0"},
-                        {"id":"9","name":"Slack","average":"6.13","average_users":"0"},
-                        {"id":"10","name":"Telegram","average":"5.56","average_users":"0"},
-                        {"id":"11","name":"Trello","average":"6.37","average_users":"0"},
-                        {"id":"12","name":"Twist","average":"6.68","average_users":"0"},
-                        {"id":"13","name":"Whatsapp","average":"4.76","average_users":"0"}
-                    ]
+                chartData = {
+                        "tools":[
+                            {"0":"1","1":"Airtable","id":"1","name":"Airtable"},
+                            {"0":"2","1":"Asana","id":"2","name":"Asana"},
+                            {"0":"3","1":"Basecamp","id":"3","name":"Basecamp"},
+                            {"0":"4","1":"Correo electrónico","id":"4","name":"Correo electrónico"},
+                            {"0":"5","1":"Dropbox Paper","id":"5","name":"Dropbox Paper"},
+                            {"0":"6","1":"Google D","id":"6","name":"Google D"},
+                            {"0":"7","1":"Notion","id":"7","name":"Notion"},
+                            {"0":"8","1":"Jira","id":"8","name":"Jira"},
+                            {"0":"9","1":"Slack","id":"9","name":"Slack"},
+                            {"0":"10","1":"Telegram","id":"10","name":"Telegram"},
+                            {"0":"11","1":"Trello","id":"11","name":"Trello"},
+                            {"0":"12","1":"Twist","id":"12","name":"Twist"},
+                            {"0":"13","1":"Whatsapp","id":"13","name":"Whatsapp"}
+                        ],
+                        "tool_rating_parameters":[
+                            {"0":"1","1":"Conversación de calidad","2":null,"id":"1","name":"Conversación de calidad","description":"Intercambiar ideas, necesidades, información, de manera cómoda y completa."},
+                            {"0":"2","1":"Management","2":null,"id":"2","name":"Management","description":"Capacidad de administración y gestión de los recursos."},
+                            {"0":"3","1":"Calma/Foco","2":null,"id":"3","name":"Calma/Foco","description":"Permite centrarnos en la tarea que se está realizando."},
+                            {"0":"4","1":"Documentación","2":null,"id":"4","name":"Documentación","description":"Instrucciones, documentos y guias para utilizar la herramienta."},
+                            {"0":"5","1":"Versatilidad","2":null,"id":"5","name":"Versatilidad","description":"Capacidad de adapatarse a las necesidades del usuario y utilidad en distintas tareas."},
+                            {"0":"6","1":"Colaboración","2":null,"id":"6","name":"Colaboración","description":"Trabajar en conjunto para completar una tarea o alcanzar una meta."},
+                            {"0":"7","1":"Simple","2":null,"id":"7","name":"Simple","description":"Facilidad de uso."},
+                            {"0":"8","1":"Accesibilidad","2":null,"id":"8","name":"Accesibilidad","description":"Que es utilizable por todas las personas en condiciones de comodidad y de la forma más autónoma y natural posible."}
+                        ],
+                        "rating_parameters_averages":[
+                            {"id":"101","tool_id":"10","parameter_id":"1","rating":"5.75","users_rating":null,"users_rating_count":null},
+                            {"id":"102","tool_id":"10","parameter_id":"2","rating":"3.75","users_rating":null,"users_rating_count":null},
+                            {"id":"103","tool_id":"10","parameter_id":"3","rating":"4.25","users_rating":null,"users_rating_count":null},
+                            {"id":"104","tool_id":"10","parameter_id":"4","rating":"2.5","users_rating":null,"users_rating_count":null},
+                            {"id":"105","tool_id":"10","parameter_id":"5","rating":"6","users_rating":null,"users_rating_count":null},
+                            {"id":"106","tool_id":"10","parameter_id":"6","rating":"5.25","users_rating":null,"users_rating_count":null},
+                            {"id":"107","tool_id":"10","parameter_id":"7","rating":"8.25","users_rating":null,"users_rating_count":null},
+                            {"id":"108","tool_id":"10","parameter_id":"8","rating":"8.75","users_rating":null,"users_rating_count":null},
+                            {"id":"11","tool_id":"1","parameter_id":"1","rating":"3.33","users_rating":null,"users_rating_count":null},
+                            {"id":"111","tool_id":"11","parameter_id":"1","rating":"4.4","users_rating":null,"users_rating_count":null},
+                            {"id":"112","tool_id":"11","parameter_id":"2","rating":"6.67","users_rating":null,"users_rating_count":null},
+                            {"id":"113","tool_id":"11","parameter_id":"3","rating":"6","users_rating":null,"users_rating_count":null},
+                            {"id":"114","tool_id":"11","parameter_id":"4","rating":"5.5","users_rating":null,"users_rating_count":null},
+                            {"id":"115","tool_id":"11","parameter_id":"5","rating":"5.8","users_rating":null,"users_rating_count":null},
+                            {"id":"116","tool_id":"11","parameter_id":"6","rating":"7.2","users_rating":null,"users_rating_count":null},
+                            {"id":"117","tool_id":"11","parameter_id":"7","rating":"7.2","users_rating":null,"users_rating_count":null},
+                            {"id":"118","tool_id":"11","parameter_id":"8","rating":"8.2","users_rating":null,"users_rating_count":null},
+                            {"id":"12","tool_id":"1","parameter_id":"2","rating":"6.33","users_rating":null,"users_rating_count":null},
+                            {"id":"121","tool_id":"12","parameter_id":"1","rating":"8.33","users_rating":null,"users_rating_count":null},
+                            {"id":"122","tool_id":"12","parameter_id":"2","rating":"5","users_rating":null,"users_rating_count":null},
+                            {"id":"123","tool_id":"12","parameter_id":"3","rating":"7.67","users_rating":null,"users_rating_count":null},
+                            {"id":"124","tool_id":"12","parameter_id":"4","rating":"4.67","users_rating":null,"users_rating_count":null},
+                            {"id":"125","tool_id":"12","parameter_id":"5","rating":"4.75","users_rating":null,"users_rating_count":null},
+                            {"id":"126","tool_id":"12","parameter_id":"6","rating":"7.67","users_rating":null,"users_rating_count":null},
+                            {"id":"127","tool_id":"12","parameter_id":"7","rating":"8.33","users_rating":null,"users_rating_count":null},
+                            {"id":"128","tool_id":"12","parameter_id":"8","rating":"7","users_rating":null,"users_rating_count":null},
+                            {"id":"13","tool_id":"1","parameter_id":"3","rating":"6","users_rating":null,"users_rating_count":null},
+                            {"id":"131","tool_id":"13","parameter_id":"1","rating":"4","users_rating":null,"users_rating_count":null},
+                            {"id":"132","tool_id":"13","parameter_id":"2","rating":"3","users_rating":null,"users_rating_count":null},
+                            {"id":"133","tool_id":"13","parameter_id":"3","rating":"3","users_rating":null,"users_rating_count":null},
+                            {"id":"134","tool_id":"13","parameter_id":"4","rating":"2","users_rating":null,"users_rating_count":null},
+                            {"id":"135","tool_id":"13","parameter_id":"5","rating":"4","users_rating":null,"users_rating_count":null},
+                            {"id":"136","tool_id":"13","parameter_id":"6","rating":"5","users_rating":null,"users_rating_count":null},
+                            {"id":"137","tool_id":"13","parameter_id":"7","rating":"9","users_rating":null,"users_rating_count":null},
+                            {"id":"138","tool_id":"13","parameter_id":"8","rating":"9","users_rating":null,"users_rating_count":null},
+                            {"id":"14","tool_id":"1","parameter_id":"4","rating":"5","users_rating":null,"users_rating_count":null},
+                            {"id":"15","tool_id":"1","parameter_id":"5","rating":"8","users_rating":null,"users_rating_count":null},
+                            {"id":"16","tool_id":"6","parameter_id":"1","rating":"2","users_rating":null,"users_rating_count":null},
+                            {"id":"17","tool_id":"7","parameter_id":"1","rating":"5.5","users_rating":null,"users_rating_count":null},
+                            {"id":"18","tool_id":"8","parameter_id":"1","rating":"4.75","users_rating":null,"users_rating_count":null},
+                            {"id":"21","tool_id":"2","parameter_id":"1","rating":"4.5","users_rating":null,"users_rating_count":null},
+                            {"id":"22","tool_id":"2","parameter_id":"2","rating":"7","users_rating":null,"users_rating_count":null},
+                            {"id":"23","tool_id":"3","parameter_id":"2","rating":"8.25","users_rating":null,"users_rating_count":null},
+                            {"id":"24","tool_id":"4","parameter_id":"2","rating":"3.33","users_rating":null,"users_rating_count":null},
+                            {"id":"25","tool_id":"5","parameter_id":"2","rating":"5","users_rating":null,"users_rating_count":null},
+                            {"id":"26","tool_id":"6","parameter_id":"2","rating":"4","users_rating":null,"users_rating_count":null},
+                            {"id":"27","tool_id":"2","parameter_id":"7","rating":"6.5","users_rating":null,"users_rating_count":null},
+                            {"id":"28","tool_id":"2","parameter_id":"8","rating":"7.25","users_rating":null,"users_rating_count":null},
+                            {"id":"31","tool_id":"3","parameter_id":"1","rating":"6.25","users_rating":null,"users_rating_count":null},
+                            {"id":"32","tool_id":"2","parameter_id":"3","rating":"6","users_rating":null,"users_rating_count":null},
+                            {"id":"33","tool_id":"3","parameter_id":"3","rating":"8.5","users_rating":null,"users_rating_count":null},
+                            {"id":"34","tool_id":"4","parameter_id":"3","rating":"4","users_rating":null,"users_rating_count":null},
+                            {"id":"35","tool_id":"5","parameter_id":"3","rating":"6","users_rating":null,"users_rating_count":null},
+                            {"id":"36","tool_id":"6","parameter_id":"3","rating":"6","users_rating":null,"users_rating_count":null},
+                            {"id":"37","tool_id":"7","parameter_id":"3","rating":"6.8","users_rating":null,"users_rating_count":null},
+                            {"id":"38","tool_id":"8","parameter_id":"3","rating":"6.25","users_rating":null,"users_rating_count":null},
+                            {"id":"4","tool_id":"4","parameter_id":"1","rating":"3.67","users_rating":null,"users_rating_count":null},
+                            {"id":"41","tool_id":"2","parameter_id":"4","rating":"5.5","users_rating":null,"users_rating_count":null},
+                            {"id":"42","tool_id":"3","parameter_id":"4","rating":"7.5","users_rating":null,"users_rating_count":null},
+                            {"id":"43","tool_id":"4","parameter_id":"4","rating":"4.33","users_rating":null,"users_rating_count":null},
+                            {"id":"44","tool_id":"5","parameter_id":"4","rating":"7","users_rating":null,"users_rating_count":null},
+                            {"id":"45","tool_id":"4","parameter_id":"5","rating":"5","users_rating":null,"users_rating_count":null},
+                            {"id":"46","tool_id":"4","parameter_id":"6","rating":"4.2","users_rating":null,"users_rating_count":null},
+                            {"id":"47","tool_id":"4","parameter_id":"7","rating":"8.6","users_rating":null,"users_rating_count":null},
+                            {"id":"48","tool_id":"8","parameter_id":"4","rating":"6.25","users_rating":null,"users_rating_count":null},
+                            {"id":"51","tool_id":"5","parameter_id":"1","rating":"4","users_rating":null,"users_rating_count":null},
+                            {"id":"52","tool_id":"2","parameter_id":"5","rating":"5.5","users_rating":null,"users_rating_count":null},
+                            {"id":"53","tool_id":"3","parameter_id":"5","rating":"5","users_rating":null,"users_rating_count":null},
+                            {"id":"55","tool_id":"5","parameter_id":"5","rating":"7","users_rating":null,"users_rating_count":null},
+                            {"id":"56","tool_id":"6","parameter_id":"5","rating":"8","users_rating":null,"users_rating_count":null},
+                            {"id":"57","tool_id":"7","parameter_id":"5","rating":"7","users_rating":null,"users_rating_count":null},
+                            {"id":"58","tool_id":"8","parameter_id":"5","rating":"6.75","users_rating":null,"users_rating_count":null},
+                            {"id":"61","tool_id":"1","parameter_id":"6","rating":"8","users_rating":null,"users_rating_count":null},
+                            {"id":"62","tool_id":"2","parameter_id":"6","rating":"6.5","users_rating":null,"users_rating_count":null},
+                            {"id":"63","tool_id":"3","parameter_id":"6","rating":"8","users_rating":null,"users_rating_count":null},
+                            {"id":"64","tool_id":"6","parameter_id":"4","rating":"8","users_rating":null,"users_rating_count":null},
+                            {"id":"65","tool_id":"5","parameter_id":"6","rating":"7","users_rating":null,"users_rating_count":null},
+                            {"id":"66","tool_id":"6","parameter_id":"6","rating":"8","users_rating":null,"users_rating_count":null},
+                            {"id":"67","tool_id":"7","parameter_id":"6","rating":"8","users_rating":null,"users_rating_count":null},
+                            {"id":"68","tool_id":"8","parameter_id":"6","rating":"6.75","users_rating":null,"users_rating_count":null},
+                            {"id":"71","tool_id":"1","parameter_id":"7","rating":"4.67","users_rating":null,"users_rating_count":null},
+                            {"id":"72","tool_id":"7","parameter_id":"2","rating":"6.2","users_rating":null,"users_rating_count":null},
+                            {"id":"73","tool_id":"3","parameter_id":"7","rating":"8","users_rating":null,"users_rating_count":null},
+                            {"id":"74","tool_id":"7","parameter_id":"4","rating":"8.8","users_rating":null,"users_rating_count":null},
+                            {"id":"75","tool_id":"5","parameter_id":"7","rating":"8","users_rating":null,"users_rating_count":null},
+                            {"id":"76","tool_id":"6","parameter_id":"7","rating":"8","users_rating":null,"users_rating_count":null},
+                            {"id":"77","tool_id":"7","parameter_id":"7","rating":"7.25","users_rating":null,"users_rating_count":null},
+                            {"id":"78","tool_id":"8","parameter_id":"7","rating":"4.75","users_rating":null,"users_rating_count":null},
+                            {"id":"81","tool_id":"1","parameter_id":"8","rating":"7","users_rating":null,"users_rating_count":null},
+                            {"id":"82","tool_id":"8","parameter_id":"2","rating":"8","users_rating":null,"users_rating_count":null},
+                            {"id":"83","tool_id":"3","parameter_id":"8","rating":"8.25","users_rating":null,"users_rating_count":null},
+                            {"id":"84","tool_id":"4","parameter_id":"8","rating":"9","users_rating":null,"users_rating_count":null},
+                            {"id":"85","tool_id":"5","parameter_id":"8","rating":"8","users_rating":null,"users_rating_count":null},
+                            {"id":"86","tool_id":"6","parameter_id":"8","rating":"9","users_rating":null,"users_rating_count":null},
+                            {"id":"87","tool_id":"7","parameter_id":"8","rating":"7.75","users_rating":null,"users_rating_count":null},
+                            {"id":"88","tool_id":"8","parameter_id":"8","rating":"4","users_rating":null,"users_rating_count":null},
+                            {"id":"91","tool_id":"9","parameter_id":"1","rating":"7.33","users_rating":null,"users_rating_count":null},
+                            {"id":"92","tool_id":"9","parameter_id":"2","rating":"3.5","users_rating":null,"users_rating_count":null},
+                            {"id":"93","tool_id":"9","parameter_id":"3","rating":"3.33","users_rating":null,"users_rating_count":null},
+                            {"id":"94","tool_id":"9","parameter_id":"4","rating":"3.67","users_rating":null,"users_rating_count":null},
+                            {"id":"95","tool_id":"9","parameter_id":"5","rating":"7.8","users_rating":null,"users_rating_count":null},
+                            {"id":"96","tool_id":"9","parameter_id":"6","rating":"7.4","users_rating":null,"users_rating_count":null},
+                            {"id":"97","tool_id":"9","parameter_id":"7","rating":"8.2","users_rating":null,"users_rating_count":null},
+                            {"id":"98","tool_id":"9","parameter_id":"8","rating":"7.8","users_rating":null,"users_rating_count":null}
+                        ]
                 }
-                
                 setUpAxisDropdowns();
                 loadDataInChart();
+            },
+            loadDatabaseData: function() {
+                $.ajax({
+                    url: 'ajax-end-point/get-chart-data.php',
+                    method: 'POST',
+                    success: function(data){
+                        chartData = data;
+                        setUpAxisDropdowns();
+                        loadDataInChart();
+                    }
+                });
             }
         }
     })();
 
     chartFunctions.init();
-    chartFunctions.loadDemoData();
+    //chartFunctions.loadDemoData();
+    chartFunctions.loadDatabaseData();
 
     /** 
      * Rating Functions
      * 
     */
     const ratingFunctions = (function() {
-        let selectedTool;
-        let rating;
+        const asCookie = typeof(Storage) == "undefined";
+        let ratedParameter,
+        selectedTool,
+        rating;
 
-        function saveToDatabase(parameter) {
-            $.ajax({
-                url : "ajax-end-point/insertRating.php",
-                data : {tool:selectedTool, rating:rating, parameter:parameter},
-                type : "POST",
-                success : function(data) {
-                    updateTableValues(selectedTool);
-                }
-            });
+        function createCookie(name, value, days) {
+            var expires;
+        
+            if (days) {
+                var date = new Date();
+                date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+                expires = "; expires=" + date.toGMTString();
+            } else {
+                expires = "";
+            }
+            document.cookie = encodeURIComponent(name) + "=" + encodeURIComponent(value) + expires + "; path=/";
+        }
+        
+        function readCookie(name) {
+            var nameEQ = encodeURIComponent(name) + "=";
+            var ca = document.cookie.split(';');
+            for (var i = 0; i < ca.length; i++) {
+                var c = ca[i];
+                while (c.charAt(0) === ' ')
+                    c = c.substring(1, c.length);
+                if (c.indexOf(nameEQ) === 0)
+                    return decodeURIComponent(c.substring(nameEQ.length, c.length));
+            }
+            return null;
+        }
+
+        function getUserRatingForParameterOfTool(parameter) {
+            if (asCookie) {
+                readCookie("" + selectedTool + parameter);
+            } else {
+                return localStorage.getItem("" + selectedTool + parameter);
+            }
+        }
+
+        function parameterOfToolRatedIsNotRated(parameter) {
+            if (asCookie) {
+                return !(readCookie("" + selectedTool + parameter));
+            } else {
+                return !(localStorage.getItem("" + selectedTool + parameter));
+            }
+        }
+
+        function setParameterOfToolAsRated() {
+            if (asCookie) {
+                createCookie("" + selectedTool + ratedParameter, rating, 7);
+            } else {
+                localStorage.setItem("" + selectedTool + ratedParameter, rating);
+            }
+        }
+
+        function saveToDatabase() {
+            if (rating < 1 || rating > 10) {
+                return
+            }
+            if (parameterOfToolRatedIsNotRated(ratedParameter)) {
+                $.ajax({
+                    url : "ajax-end-point/insert-rating.php",
+                    data : {ratedToolId:selectedTool, ratedToolRatingParameterId:ratedParameter, rating:rating},
+                    type : "POST",
+                    success : function(data) {
+                        setParameterOfToolAsRated();
+                        updateTableValues(selectedTool);
+                    }
+                });
+            }
         }
 
         function styleStars(star) {
@@ -375,9 +562,14 @@ jQuery( function() {
 
         function styleStarsPermanently(star) {
             const parent = $(star).parent();
+
+            ratedParameter = parent.attr('data-index');
             rating = parseInt($(star).attr('data-index')) + 1;
+            
             parent.find("i:lt(" + rating + "):not(.selected)").toggleClass("far fas");
-            saveToDatabase(parent.attr('data-index'));
+            parent.find("i").unbind();
+
+            saveToDatabase();
         }
 
         function setStarsListeners() {
@@ -399,24 +591,37 @@ jQuery( function() {
 
         function updateTableValues(toolId) {
             selectedTool = toolId;
+
             $.ajax({
-                url: 'ajax-end-point/getToolRatings.php',
+                url: 'ajax-end-point/get-tool-ratings-table.php',
                 method: 'POST',
-                data: {tool: toolId},
+                data: {toolId: toolId, updatedRatingParameter: ratedParameter},
                 success: function(data){
-                    $('#bodyRatingTable').html(data);
+                    $('#ratingTable').html(data);
                     setStarsListeners();
+
+                    const starsContainers = $('.stars-container');
+                    $.each(starsContainers, function(i, val) {
+                        const parameter = $(val).attr('data-index');
+                        if (!parameterOfToolRatedIsNotRated(parameter)) {
+                            const rating = getUserRatingForParameterOfTool(parameter);
+                            $(val).find("i").unbind();
+                            $(val).find("i:lt(" + (parseInt(rating)) + "):not(.selected)").toggleClass("far fas");
+                        }
+                    });
+
+                    $('.dropdown-item.tool').on('click', function () {
+                        updateTableValues($(this).attr('data-index'));
+                    });
                 }
             });
         }
 
         return {
             init: function() {
-                updateTableValues(1)
 
-                $('.dropdown-item.tool').on('click', function () {
-                    updateTableValues($(this).attr('data-index'));
-                });
+
+                updateTableValues(1)
             }
         }
     })();
